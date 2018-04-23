@@ -1,3 +1,4 @@
+[![npm version](https://badge.fury.io/js/dynamic-marquee.svg)](https://badge.fury.io/js/dynamic-marquee)
 # Dynamic Marquee
 A small library for creating marquees. No dependencies!
 
