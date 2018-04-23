@@ -1,0 +1,15 @@
+{
+  "env": {
+    "browser": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-cond-assign": 0,
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"]
+  },
+  "extends": "eslint:recommended"
+}

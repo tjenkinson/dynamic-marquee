@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/dynamic-marquee@1"></script>
+    <style>
+      #marquee {
+        position: fixed;
+        overflow: hidden;
+        margin: 0;
+        padding: 7px 0;
+        height: 20px;
+        font-size: 20px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #c80000;
+        color: #ffffff;
+        font-family: Verdana, Geneva, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="marquee"></div>
+    <script type="text/javascript">
+      const { Marquee, loop } = dynamicMarquee;
+      const $marquee = document.getElementById('marquee');
+      const marquee = window.m = new Marquee($marquee, { rate: -100 });
+      window.l = loop(marquee, [
+        () => 'Contrary to popular belief, Lorem Ipsum is not simply random text',
+        () => 'It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old',
+        () => 'Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source',
+        () => 'RLorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC',
+      ], () => {
+        const $separator = document.createElement('div');
+        $separator.innerHTML = '&nbsp|&nbsp';
+        return $separator;
+      });
+    </script>
+  </body>
+</html>
