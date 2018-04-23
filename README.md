@@ -9,6 +9,11 @@ Features:
 
 A [`loop()`](#loop) helpers function is also provided which makes creating a carousel with looping content simple.
 
+# Demo
+View the demo [here](https://tjenkinson.github.io/dynamic-marquee/demo.html).
+
+View the code at "[demo.html](./demo.html)".
+
 # Installation
 ```
 npm install --save dynamic-marquee
@@ -115,6 +120,3 @@ control.update([
   () => 'new item 2'
 ])
 ```
-
-# Demo
-See "[demo.html](./demo.html)".
