@@ -23,11 +23,16 @@ export class Marquee {
     this._pendingItem = null;
     const $innerContainer = document.createElement('div');
     $innerContainer.style.position = 'relative';
-    $innerContainer.style.width = '100%';
-    $innerContainer.style.height = '100%';
+    $innerContainer.style.display = 'inline-block';
     this._$container = $innerContainer;
+    this._containerSize = null;
+    if (this._direction === DIRECTION.RIGHT) {
+      $innerContainer.style.width = '100%';
+    } else {
+      $innerContainer.style.height = '100%';
+    }
+    this._updateContainerSize();
     $container.appendChild($innerContainer);
-    this._lastUpdateTime = performance.now();
     this._scheduleRender();
   }
   
@@ -96,6 +101,27 @@ export class Marquee {
           deferException(() => cb(item.getOriginalEl()));
         });
       });
+    }
+  }
+
+  // update size of container so that the marquee items fit inside it.
+  // This is needed because the items are posisitioned absolutely, so not in normal flow.
+  // Without this, the height of the container would always be 0px, which is not useful
+  _updateContainerSize() {
+    const maxSize = this._items.reduce((size, item) => {
+      const a = item.getSize({ inverse: true });
+      if (a > size) {
+        return a;
+      }
+      return size;
+    }, 0);
+    if (this._containerSize !== maxSize) {
+      this._containerSize = maxSize;
+      if (this._direction === DIRECTION.RIGHT) {
+        this._$container.style.height = `${maxSize}px`;
+      } else {
+        this._$container.style.width = `${maxSize}px`;
+      }
     }
   }
 
@@ -187,6 +213,7 @@ export class Marquee {
     }
 
     offsets.forEach((offset, i) => this._items[i].setOffset(offset));
+    this._updateContainerSize();
 
     if (!this._items.length) {
       defer(() => {

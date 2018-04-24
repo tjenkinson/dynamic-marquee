@@ -17,8 +17,12 @@ export class Item {
     this._$el = $el;
     this._direction = direction;
   }
-  getSize() {
-     return size(this._$container, this._direction);
+  getSize({ inverse = false } = {}) {
+    let dir = this._direction;
+    if (inverse) {
+      dir = dir === DIRECTION.RIGHT ? DIRECTION.DOWN : DIRECTION.RIGHT;
+    }
+    return size(this._$container, dir);
   }
   setOffset(offset) {
     if (this._direction === DIRECTION.RIGHT) {

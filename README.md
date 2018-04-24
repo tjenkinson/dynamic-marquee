@@ -6,6 +6,7 @@ Features:
 - You can change the rate on the fly.
 - Direction can either be up/down or right/left.
 - Width/height of items and container is allowed to change.
+- Container width/height is updated correctly to match maximum size of current items.
 - You can add an item at any time when space is available, and it will start off screen.
 
 A [`loop()`](#loop) helper function is also provided which makes creating a carousel with looping content simple.
