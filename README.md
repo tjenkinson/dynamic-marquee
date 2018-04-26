@@ -1,6 +1,6 @@
 [![npm version](https://badge.fury.io/js/dynamic-marquee.svg)](https://badge.fury.io/js/dynamic-marquee)
 # Dynamic Marquee
-A small library for creating marquees. No dependencies!
+A small library for creating marquees.
 
 Features:
 - You can change the rate on the fly.
@@ -49,6 +49,8 @@ const marquee = new Marquee(document.getElementById('marquee'), {
 
 ## Append Item
 You can add DOM elements, or just a string (which will automatically be wrapped in a div).
+
+**Each DOM element is only allowed on the marquee at one time.**
 ```js
 const $item = document.createElement('div');
 $item.textContent = 'testing123';
@@ -107,6 +109,8 @@ marquee.getNumItems();
 A `loop()` function is provided for making looping content simple.
 
 You provide an array of functions which return a DOM element, or string for that item. You can update this on the fly by calling the provided `update()` method.
+
+**When returning DOM elements each function should build the element from scratch, as the same DOM element is not allowed to appear on the marquee multiple times.**
 
 ```js
 const $marquee = document.getElementById('marquee');
