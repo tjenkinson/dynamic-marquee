@@ -76,7 +76,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -117,10 +117,10 @@ function deferException(cb) {
 }
 
 function toDomEl($el) {
-  if (typeof $el === 'string') {
+  if (typeof $el === 'string' || typeof $el === 'number') {
     // helper. convert string to div
     var $div = document.createElement('div');
-    $div.textContent = $el;
+    $div.textContent = $el + "";
     return $div;
   }
   return $el;
@@ -148,6 +148,46 @@ var DIRECTION = exports.DIRECTION = {
 "use strict";
 
 
+var indexMap = function indexMap(list) {
+  var map = {};
+  list.forEach(function (each, i) {
+    map[each] = map[each] || [];
+    map[each].push(i);
+  });
+  return map;
+};
+
+var longestCommonSubstring = function longestCommonSubstring(seq1, seq2) {
+  var result = { startString1: 0, startString2: 0, length: 0 };
+  var indexMapBefore = indexMap(seq1);
+  var previousOverlap = [];
+  seq2.forEach(function (eachAfter, indexAfter) {
+    var overlapLength;
+    var overlap = [];
+    var indexesBefore = indexMapBefore[eachAfter] || [];
+    indexesBefore.forEach(function (indexBefore) {
+      overlapLength = (indexBefore && previousOverlap[indexBefore - 1] || 0) + 1;
+      if (overlapLength > result.length) {
+        result.length = overlapLength;
+        result.startString1 = indexBefore - overlapLength + 1;
+        result.startString2 = indexAfter - overlapLength + 1;
+      }
+      overlap[indexBefore] = overlapLength;
+    });
+    previousOverlap = overlap;
+  });
+  return result;
+};
+
+module.exports = longestCommonSubstring;
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -155,18 +195,37 @@ exports.loop = loop;
 
 var _helpers = __webpack_require__(0);
 
+var _longestCommonSubstring = __webpack_require__(2);
+
+var _longestCommonSubstring2 = _interopRequireDefault(_longestCommonSubstring);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function loop(marquee) {
   var buildersIn = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
   var seperatorBuilder = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
   var lastIndex = -1;
   var builders = buildersIn.slice();
+
+  var getNextBuilder = function getNextBuilder() {
+    var offset = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+
+    var nextIndex = (lastIndex + offset) % builders.length;
+    return { builder: builders[nextIndex], index: nextIndex };
+  };
+
   var appendItem = function appendItem(spaceJustAvailable) {
     if (!builders.length || !marquee.isWaitingForItem()) {
       return;
     }
-    lastIndex = (lastIndex + 1) % builders.length;
-    var $item = (0, _helpers.toDomEl)(builders[lastIndex]());
+
+    var _getNextBuilder = getNextBuilder(),
+        builder = _getNextBuilder.builder,
+        index = _getNextBuilder.index;
+
+    lastIndex = index;
+    var $item = (0, _helpers.toDomEl)(builder());
     if (spaceJustAvailable && seperatorBuilder) {
       var $seperator = (0, _helpers.toDomEl)(seperatorBuilder());
       var $container = document.createElement('div');
@@ -184,6 +243,33 @@ function loop(marquee) {
   appendItem();
   return {
     update: function update(newBuilders) {
+
+      // try and start from somewhere that makes sense
+      var calculateNewIndex = function calculateNewIndex() {
+        // convert array of function references to array of ids
+        var buildersStructure = builders.map(function (b, i) {
+          var prevIndex = builders.indexOf(b);
+          // if already seen builder, give it the same number
+          return prevIndex < i ? prevIndex : i;
+        });
+        var newBuildersStructure = newBuilders.map(function (b, i) {
+          // matching indexes where they exist, and -1 for all unknown
+          return builders.indexOf(b);
+        });
+
+        var _longestSubstring = (0, _longestCommonSubstring2.default)(buildersStructure, newBuildersStructure),
+            startString1 = _longestSubstring.startString1,
+            startString2 = _longestSubstring.startString2,
+            length = _longestSubstring.length;
+
+        if (lastIndex >= startString1 && lastIndex < startString1 + length) {
+          // we are in the overlapping region
+          return lastIndex + (startString2 - startString1);
+        }
+        return -1;
+      };
+
+      lastIndex = calculateNewIndex();
       builders = newBuilders.slice();
       appendItem(false);
     }
@@ -191,7 +277,7 @@ function loop(marquee) {
 }
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -286,6 +372,13 @@ var VirtualItem = exports.VirtualItem = function () {
   _createClass(VirtualItem, [{
     key: 'getSize',
     value: function getSize() {
+      var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+          _ref2$inverse = _ref2.inverse,
+          inverse = _ref2$inverse === undefined ? false : _ref2$inverse;
+
+      if (inverse) {
+        throw new Error('Inverse not supported on virtual item.');
+      }
       return this._size;
     }
   }, {
@@ -303,7 +396,7 @@ var VirtualItem = exports.VirtualItem = function () {
 }();
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -316,7 +409,7 @@ exports.Marquee = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _item = __webpack_require__(3);
+var _item = __webpack_require__(4);
 
 var _direction = __webpack_require__(1);
 
@@ -460,6 +553,9 @@ var Marquee = exports.Marquee = function () {
     key: '_updateContainerSize',
     value: function _updateContainerSize() {
       var maxSize = this._items.reduce(function (size, item) {
+        if (item instanceof _item.VirtualItem) {
+          return size;
+        }
         var a = item.getSize({ inverse: true });
         if (a > size) {
           return a;
@@ -616,7 +712,7 @@ var Marquee = exports.Marquee = function () {
 }();
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -626,7 +722,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _marquee = __webpack_require__(4);
+var _marquee = __webpack_require__(5);
 
 Object.defineProperty(exports, 'Marquee', {
   enumerable: true,
@@ -635,7 +731,7 @@ Object.defineProperty(exports, 'Marquee', {
   }
 });
 
-var _loop = __webpack_require__(2);
+var _loop = __webpack_require__(3);
 
 Object.defineProperty(exports, 'loop', {
   enumerable: true,
