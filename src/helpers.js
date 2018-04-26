@@ -19,10 +19,10 @@ export function deferException(cb) {
 }
 
 export function toDomEl($el) {
-  if (typeof $el === 'string') {
+  if (typeof $el === 'string' || typeof $el === 'number') {
     // helper. convert string to div
     const $div = document.createElement('div');
-    $div.textContent = $el;
+    $div.textContent = $el+"";
     return $div;
   }
   return $el;
