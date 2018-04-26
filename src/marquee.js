@@ -109,6 +109,9 @@ export class Marquee {
   // Without this, the height of the container would always be 0px, which is not useful
   _updateContainerSize() {
     const maxSize = this._items.reduce((size, item) => {
+      if (item instanceof VirtualItem) {
+        return size;
+      }
       const a = item.getSize({ inverse: true });
       if (a > size) {
         return a;

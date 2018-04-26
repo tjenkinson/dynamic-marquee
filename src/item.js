@@ -49,7 +49,10 @@ export class VirtualItem {
   constructor(size) {
     this._size = size;
   }
-  getSize() {
+  getSize({ inverse = false } = {}) {
+    if (inverse) {
+      throw new Error('Inverse not supported on virtual item.');
+    }
     return this._size;
   }
   setOffset() {}
