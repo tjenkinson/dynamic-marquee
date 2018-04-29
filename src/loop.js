@@ -10,14 +10,14 @@ export function loop(marquee, buildersIn=[], seperatorBuilder=null) {
     return { builder: builders[nextIndex], index: nextIndex };
   }
 
-  const appendItem = (spaceJustAvailable) => {
+  const appendItem = (immediatelyFollowsPrevious) => {
     if (!builders.length || !marquee.isWaitingForItem()) {
       return;
     }
     const { builder, index } = getNextBuilder();
     lastIndex = index;
     let $item = toDomEl(builder());
-    if (spaceJustAvailable && seperatorBuilder) {
+    if (immediatelyFollowsPrevious && seperatorBuilder) {
       const $seperator = toDomEl(seperatorBuilder());
       const $container = document.createElement('div');
       $seperator.style.display = 'inline';
@@ -28,7 +28,7 @@ export function loop(marquee, buildersIn=[], seperatorBuilder=null) {
     }
     marquee.appendItem($item);
   };
-  marquee.onItemRequired(() => appendItem(true));
+  marquee.onItemRequired(({ immediatelyFollowsPrevious }) => appendItem(immediatelyFollowsPrevious));
   appendItem();
   return {
     update: (newBuilders) => {

@@ -72,6 +72,9 @@ marquee.onItemRequired(() => {
   return $item;
 });
 ```
+**Do not perform any long running tasks in this method as it will block rendering.**
+
+If you need to perform some work in this method consider wrapping it in a `setTimeout` with delay 0.
 
 ## Change the scroll rate? (px/s)
 You can change the rate at any time, and set to 0 to pause.
