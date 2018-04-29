@@ -23,6 +23,8 @@ export class Marquee {
     this._leftItemOffset = 0;
     this._containerSize = 0;
     this._items = [];
+    this._overflowsRight = false;
+    this._overflowsLeft = false;
     this._pendingItem = null;
     const $innerContainer = document.createElement('div');
     $innerContainer.style.position = 'relative';
@@ -73,6 +75,8 @@ export class Marquee {
     this._items.forEach(($a) => this._removeItem($a));
     this._items = [];
     this._waitingForItem = true;
+    this._overflowsRight = false;
+    this._overflowsLeft = false;
     this._updateContainerSize();
   }
 
@@ -179,6 +183,9 @@ export class Marquee {
         this._items.shift();
         this._leftItemOffset += size;
       }
+      if (this._items[0] instanceof VirtualItem) {
+        this._overflowsLeft = false;
+      }
     }
 
     const offsets = [];  
@@ -194,6 +201,9 @@ export class Marquee {
       nextOffset += item.getSize();
       return false;
     });
+    if (this._items.length && this._items[this._items.length - 1] instanceof VirtualItem) {
+      this._overflowsRight = false;
+    }
 
     if (this._pendingItem) {
       this._$container.appendChild(this._pendingItem.getContainer());
@@ -207,6 +217,7 @@ export class Marquee {
         offsets.push(nextOffset);
         nextOffset += this._pendingItem.getSize();
         this._items.push(this._pendingItem);
+        this._overflowsRight = true;
       } else {
         if (!this._nextItemImmediatelyFollowsPrevious && this._items.length && this._leftItemOffset > 0) {
           this._items.unshift(new VirtualItem(this._leftItemOffset));
@@ -216,6 +227,7 @@ export class Marquee {
         this._leftItemOffset -= this._pendingItem.getSize();
         offsets.unshift(this._leftItemOffset);
         this._items.unshift(this._pendingItem);
+        this._overflowsLeft = true;
       }
       this._pendingItem = null;
     }
@@ -253,7 +265,16 @@ export class Marquee {
       this._waitingForItem = true;
       // if all items have been cleared then make the next item start offscreen
       const nextItemImmediatelyFollowsPrevious = this._nextItemImmediatelyFollowsPrevious =
-        !!this._items.length;
+        !!this._items.length && (
+          (this._rate <= 0 && this._overflowsRight) ||
+          (this._rate > 0 && this._overflowsLeft)
+        );
+
+      if (this._rate <= 0) {
+        this._overflowsRight = false;
+      } else {
+        this._overflowsLeft = false;
+      }
       let nextItem;
       this._onItemRequired.some((cb) => {
         return deferException(() => {
