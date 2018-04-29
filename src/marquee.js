@@ -73,6 +73,7 @@ export class Marquee {
     this._items.forEach(($a) => this._removeItem($a));
     this._items = [];
     this._waitingForItem = true;
+    this._updateContainerSize();
   }
 
   isWaitingForItem() {
