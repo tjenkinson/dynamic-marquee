@@ -94,14 +94,14 @@ export class Marquee {
   }
 
   _removeItem(item) {
-    item.remove();
-    if (item instanceof Item) {
-      defer(() => {
+    defer(() => {
+      item.remove();
+      if (item instanceof Item) {
         this._onItemRemoved.forEach((cb) => {
           deferException(() => cb(item.getOriginalEl()));
         });
-      });
-    }
+      }
+    });
   }
 
   // update size of container so that the marquee items fit inside it.
