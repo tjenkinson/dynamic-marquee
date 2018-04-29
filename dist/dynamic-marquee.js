@@ -439,6 +439,8 @@ var Marquee = exports.Marquee = function () {
     this._leftItemOffset = 0;
     this._containerSize = 0;
     this._items = [];
+    this._overflowsRight = false;
+    this._overflowsLeft = false;
     this._pendingItem = null;
     var $innerContainer = document.createElement('div');
     $innerContainer.style.position = 'relative';
@@ -507,6 +509,10 @@ var Marquee = exports.Marquee = function () {
         return _this._removeItem($a);
       });
       this._items = [];
+      this._waitingForItem = true;
+      this._overflowsRight = false;
+      this._overflowsLeft = false;
+      this._updateContainerSize();
     }
   }, {
     key: 'isWaitingForItem',
@@ -638,6 +644,9 @@ var Marquee = exports.Marquee = function () {
           this._items.shift();
           this._leftItemOffset += _size;
         }
+        if (this._items[0] instanceof _item.VirtualItem) {
+          this._overflowsLeft = false;
+        }
       }
 
       var offsets = [];
@@ -655,6 +664,9 @@ var Marquee = exports.Marquee = function () {
         nextOffset += item.getSize();
         return false;
       });
+      if (this._items.length && this._items[this._items.length - 1] instanceof _item.VirtualItem) {
+        this._overflowsRight = false;
+      }
 
       if (this._pendingItem) {
         this._$container.appendChild(this._pendingItem.getContainer());
@@ -668,6 +680,7 @@ var Marquee = exports.Marquee = function () {
           offsets.push(nextOffset);
           nextOffset += this._pendingItem.getSize();
           this._items.push(this._pendingItem);
+          this._overflowsRight = true;
         } else {
           if (!this._nextItemImmediatelyFollowsPrevious && this._items.length && this._leftItemOffset > 0) {
             this._items.unshift(new _item.VirtualItem(this._leftItemOffset));
@@ -677,6 +690,7 @@ var Marquee = exports.Marquee = function () {
           this._leftItemOffset -= this._pendingItem.getSize();
           offsets.unshift(this._leftItemOffset);
           this._items.unshift(this._pendingItem);
+          this._overflowsLeft = true;
         }
         this._pendingItem = null;
       }
@@ -712,7 +726,13 @@ var Marquee = exports.Marquee = function () {
       if (!this._waitingForItem && (this._rate <= 0 && nextOffset <= containerSize || this._rate > 0 && this._leftItemOffset >= 0)) {
         this._waitingForItem = true;
         // if all items have been cleared then make the next item start offscreen
-        var nextItemImmediatelyFollowsPrevious = this._nextItemImmediatelyFollowsPrevious = !!this._items.length;
+        var nextItemImmediatelyFollowsPrevious = this._nextItemImmediatelyFollowsPrevious = !!this._items.length && (this._rate <= 0 && this._overflowsRight || this._rate > 0 && this._overflowsLeft);
+
+        if (this._rate <= 0) {
+          this._overflowsRight = false;
+        } else {
+          this._overflowsLeft = false;
+        }
         var nextItem = void 0;
         this._onItemRequired.some(function (cb) {
           return (0, _helpers.deferException)(function () {
