@@ -215,7 +215,7 @@ function loop(marquee) {
     return { builder: builders[nextIndex], index: nextIndex };
   };
 
-  var appendItem = function appendItem(spaceJustAvailable) {
+  var appendItem = function appendItem(immediatelyFollowsPrevious) {
     if (!builders.length || !marquee.isWaitingForItem()) {
       return;
     }
@@ -226,7 +226,7 @@ function loop(marquee) {
 
     lastIndex = index;
     var $item = (0, _helpers.toDomEl)(builder());
-    if (spaceJustAvailable && seperatorBuilder) {
+    if (immediatelyFollowsPrevious && seperatorBuilder) {
       var $seperator = (0, _helpers.toDomEl)(seperatorBuilder());
       var $container = document.createElement('div');
       $seperator.style.display = 'inline';
@@ -237,8 +237,9 @@ function loop(marquee) {
     }
     marquee.appendItem($item);
   };
-  marquee.onItemRequired(function () {
-    return appendItem(true);
+  marquee.onItemRequired(function (_ref) {
+    var immediatelyFollowsPrevious = _ref.immediatelyFollowsPrevious;
+    return appendItem(immediatelyFollowsPrevious);
   });
   appendItem();
   return {
@@ -427,20 +428,23 @@ var Marquee = exports.Marquee = function () {
 
     _classCallCheck(this, Marquee);
 
+    this._rendering = false;
     this._waitingForItem = true;
+    this._nextItemImmediatelyFollowsPrevious = false;
     this._rate = rate;
     this._direction = upDown ? _direction.DIRECTION.DOWN : _direction.DIRECTION.RIGHT;
     this._onItemRequired = [];
     this._onItemRemoved = [];
     this._onAllItemsRemoved = [];
     this._leftItemOffset = 0;
+    this._containerSize = 0;
     this._items = [];
     this._pendingItem = null;
     var $innerContainer = document.createElement('div');
     $innerContainer.style.position = 'relative';
     $innerContainer.style.display = 'inline-block';
     this._$container = $innerContainer;
-    this._containerSize = null;
+    this._containerSizeInverse = null;
     if (this._direction === _direction.DIRECTION.RIGHT) {
       $innerContainer.style.width = '100%';
     } else {
@@ -533,16 +537,16 @@ var Marquee = exports.Marquee = function () {
     value: function _removeItem(item) {
       var _this2 = this;
 
-      item.remove();
-      if (item instanceof _item.Item) {
-        (0, _helpers.defer)(function () {
+      (0, _helpers.defer)(function () {
+        item.remove();
+        if (item instanceof _item.Item) {
           _this2._onItemRemoved.forEach(function (cb) {
             (0, _helpers.deferException)(function () {
               return cb(item.getOriginalEl());
             });
           });
-        });
-      }
+        }
+      });
     }
 
     // update size of container so that the marquee items fit inside it.
@@ -562,8 +566,8 @@ var Marquee = exports.Marquee = function () {
         }
         return size;
       }, 0);
-      if (this._containerSize !== maxSize) {
-        this._containerSize = maxSize;
+      if (this._containerSizeInverse !== maxSize) {
+        this._containerSizeInverse = maxSize;
         if (this._direction === _direction.DIRECTION.RIGHT) {
           this._$container.style.height = maxSize + 'px';
         } else {
@@ -583,16 +587,21 @@ var Marquee = exports.Marquee = function () {
     value: function _scheduleRender() {
       var _this3 = this;
 
-      if (!this._requestAnimationID) {
-        this._lastUpdateTime = performance.now();
-        this._requestAnimationID = window.requestAnimationFrame(function () {
-          return _this3._render();
-        });
+      if (this._rendering) {
+        // we are already rendering, so call the render method synchronously
+        this._render();
+      } else {
+        if (!this._requestAnimationID) {
+          this._lastUpdateTime = performance.now();
+          this._requestAnimationID = window.requestAnimationFrame(function () {
+            return _this3._onRequestAnimationFrame();
+          });
+        }
       }
     }
   }, {
-    key: '_render',
-    value: function _render() {
+    key: '_onRequestAnimationFrame',
+    value: function _onRequestAnimationFrame() {
       var _this4 = this;
 
       this._requestAnimationID = null;
@@ -603,10 +612,21 @@ var Marquee = exports.Marquee = function () {
       var now = performance.now();
       var timePassed = now - this._lastUpdateTime;
       this._scheduleRender();
+      this._rendering = true;
       var shiftAmount = this._rate * (timePassed / 1000);
       this._leftItemOffset += shiftAmount;
-      var containerSize = (0, _helpers.size)(this._$container, this._direction);
+      this._containerSize = (0, _helpers.size)(this._$container, this._direction);
+      (0, _helpers.deferException)(function () {
+        return _this4._render();
+      });
+      this._rendering = false;
+    }
+  }, {
+    key: '_render',
+    value: function _render() {
+      var _this5 = this;
 
+      var containerSize = this._containerSize;
       if (this._rate < 0) {
         while (this._items.length) {
           var item = this._items[0];
@@ -624,9 +644,9 @@ var Marquee = exports.Marquee = function () {
       var nextOffset = this._leftItemOffset;
       this._items.some(function (item, i) {
         if (nextOffset >= containerSize) {
-          if (_this4._rate > 0) {
-            _this4._items.splice(i).forEach(function (a) {
-              return _this4._removeItem(a);
+          if (_this5._rate > 0) {
+            _this5._items.splice(i).forEach(function (a) {
+              return _this5._removeItem(a);
             });
           }
           return true;
@@ -637,19 +657,19 @@ var Marquee = exports.Marquee = function () {
       });
 
       if (this._pendingItem) {
-        if (!this._items.length) {
-          this._leftItemOffset = 0;
-        }
         this._$container.appendChild(this._pendingItem.getContainer());
         if (this._rate <= 0) {
-          // insert virtual item so that it starts off screen
-          this._items.push(new _item.VirtualItem(Math.max(0, containerSize - nextOffset)));
+          if (!this._nextItemImmediatelyFollowsPrevious) {
+            // insert virtual item so that it starts off screen
+            this._items.push(new _item.VirtualItem(Math.max(0, containerSize - nextOffset)));
+            offsets.push(nextOffset);
+            nextOffset = containerSize;
+          }
           offsets.push(nextOffset);
-          nextOffset = containerSize + this._pendingItem.getSize();
-          offsets.push(containerSize);
+          nextOffset += this._pendingItem.getSize();
           this._items.push(this._pendingItem);
         } else {
-          if (this._items.length && this._leftItemOffset > 0) {
+          if (!this._nextItemImmediatelyFollowsPrevious && this._items.length && this._leftItemOffset > 0) {
             this._items.unshift(new _item.VirtualItem(this._leftItemOffset));
             offsets.unshift(0);
             this._leftItemOffset = 0;
@@ -673,13 +693,14 @@ var Marquee = exports.Marquee = function () {
       }
 
       offsets.forEach(function (offset, i) {
-        return _this4._items[i].setOffset(offset);
+        return _this5._items[i].setOffset(offset);
       });
       this._updateContainerSize();
 
       if (!this._items.length) {
+        this._leftItemOffset = 0;
         (0, _helpers.defer)(function () {
-          _this4._onAllItemsRemoved.forEach(function (cb) {
+          _this5._onAllItemsRemoved.forEach(function (cb) {
             (0, _helpers.deferException)(function () {
               return cb();
             });
@@ -687,23 +708,23 @@ var Marquee = exports.Marquee = function () {
         });
       }
 
+      this._nextItemImmediatelyFollowsPrevious = false;
       if (!this._waitingForItem && (this._rate <= 0 && nextOffset <= containerSize || this._rate > 0 && this._leftItemOffset >= 0)) {
         this._waitingForItem = true;
-        // timer to not block rendering
-        (0, _helpers.defer)(function () {
-          if (_this4._waitingForItem) {
-            var nextItem = void 0;
-            _this4._onItemRequired.some(function (cb) {
-              return (0, _helpers.deferException)(function () {
-                nextItem = cb();
-                return !!nextItem;
-              });
-            });
-            if (nextItem) {
-              _this4.appendItem(nextItem);
-            }
-          }
+        // if all items have been cleared then make the next item start offscreen
+        var nextItemImmediatelyFollowsPrevious = this._nextItemImmediatelyFollowsPrevious = !!this._items.length;
+        var nextItem = void 0;
+        this._onItemRequired.some(function (cb) {
+          return (0, _helpers.deferException)(function () {
+            nextItem = cb({ immediatelyFollowsPrevious: nextItemImmediatelyFollowsPrevious });
+            return !!nextItem;
+          });
         });
+        if (nextItem) {
+          // Note appendItem() will call _scheduleRender(), which will synchronously call
+          // _render() again
+          this.appendItem(nextItem);
+        }
       }
     }
   }]);
