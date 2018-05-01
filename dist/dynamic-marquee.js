@@ -231,8 +231,13 @@ function loop(marquee) {
       var $container = document.createElement('div');
       $seperator.style.display = 'inline';
       $item.style.display = 'inline';
-      $container.appendChild($seperator);
-      $container.appendChild($item);
+      if (marquee.getRate() <= 0) {
+        $container.appendChild($seperator);
+        $container.appendChild($item);
+      } else {
+        $container.appendChild($item);
+        $container.appendChild($seperator);
+      }
       $item = $container;
     }
     marquee.appendItem($item);
@@ -244,7 +249,6 @@ function loop(marquee) {
   appendItem();
   return {
     update: function update(newBuilders) {
-
       // try and start from somewhere that makes sense
       var calculateNewIndex = function calculateNewIndex() {
         // convert array of function references to array of ids
@@ -298,7 +302,7 @@ var _helpers = __webpack_require__(0);
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Item = exports.Item = function () {
-  function Item($el, direction) {
+  function Item($el, direction, rateWhenAppended) {
     _classCallCheck(this, Item);
 
     var $container = document.createElement('div');
@@ -314,6 +318,7 @@ var Item = exports.Item = function () {
     this._$container = $container;
     this._$el = $el;
     this._direction = direction;
+    this._rateWhenAppended = rateWhenAppended;
   }
 
   _createClass(Item, [{
@@ -357,6 +362,11 @@ var Item = exports.Item = function () {
     key: 'getOriginalEl',
     value: function getOriginalEl() {
       return this._$el;
+    }
+  }, {
+    key: 'getRateWhenAppended',
+    value: function getRateWhenAppended() {
+      return this._rateWhenAppended;
     }
   }]);
 
@@ -439,8 +449,6 @@ var Marquee = exports.Marquee = function () {
     this._leftItemOffset = 0;
     this._containerSize = 0;
     this._items = [];
-    this._overflowsRight = false;
-    this._overflowsLeft = false;
     this._pendingItem = null;
     var $innerContainer = document.createElement('div');
     $innerContainer.style.position = 'relative';
@@ -501,6 +509,11 @@ var Marquee = exports.Marquee = function () {
       this._rate = rate;
     }
   }, {
+    key: 'getRate',
+    value: function getRate() {
+      return this._rate;
+    }
+  }, {
     key: 'clear',
     value: function clear() {
       var _this = this;
@@ -510,8 +523,6 @@ var Marquee = exports.Marquee = function () {
       });
       this._items = [];
       this._waitingForItem = true;
-      this._overflowsRight = false;
-      this._overflowsLeft = false;
       this._updateContainerSize();
     }
   }, {
@@ -534,7 +545,7 @@ var Marquee = exports.Marquee = function () {
         throw new Error('Item already exists.');
       }
       this._waitingForItem = false;
-      this._pendingItem = new _item.Item($el, this._direction);
+      this._pendingItem = new _item.Item($el, this._direction, this._rate);
       this._pendingItem.enableAnimationHint(!!this._rate);
       this._scheduleRender();
     }
@@ -644,9 +655,6 @@ var Marquee = exports.Marquee = function () {
           this._items.shift();
           this._leftItemOffset += _size;
         }
-        if (this._items[0] instanceof _item.VirtualItem) {
-          this._overflowsLeft = false;
-        }
       }
 
       var offsets = [];
@@ -664,9 +672,6 @@ var Marquee = exports.Marquee = function () {
         nextOffset += item.getSize();
         return false;
       });
-      if (this._items.length && this._items[this._items.length - 1] instanceof _item.VirtualItem) {
-        this._overflowsRight = false;
-      }
 
       if (this._pendingItem) {
         this._$container.appendChild(this._pendingItem.getContainer());
@@ -680,7 +685,6 @@ var Marquee = exports.Marquee = function () {
           offsets.push(nextOffset);
           nextOffset += this._pendingItem.getSize();
           this._items.push(this._pendingItem);
-          this._overflowsRight = true;
         } else {
           if (!this._nextItemImmediatelyFollowsPrevious && this._items.length && this._leftItemOffset > 0) {
             this._items.unshift(new _item.VirtualItem(this._leftItemOffset));
@@ -690,7 +694,6 @@ var Marquee = exports.Marquee = function () {
           this._leftItemOffset -= this._pendingItem.getSize();
           offsets.unshift(this._leftItemOffset);
           this._items.unshift(this._pendingItem);
-          this._overflowsLeft = true;
         }
         this._pendingItem = null;
       }
@@ -725,18 +728,24 @@ var Marquee = exports.Marquee = function () {
       this._nextItemImmediatelyFollowsPrevious = false;
       if (!this._waitingForItem && (this._rate <= 0 && nextOffset <= containerSize || this._rate > 0 && this._leftItemOffset >= 0)) {
         this._waitingForItem = true;
-        // if all items have been cleared then make the next item start offscreen
-        var nextItemImmediatelyFollowsPrevious = this._nextItemImmediatelyFollowsPrevious = !!this._items.length && (this._rate <= 0 && this._overflowsRight || this._rate > 0 && this._overflowsLeft);
-
-        if (this._rate <= 0) {
-          this._overflowsRight = false;
-        } else {
-          this._overflowsLeft = false;
+        // if an item is appended immediately below, it would be considered immediately following
+        // the previous if the item it would follow was appended from the same side
+        // This is useful when deciding whether to add a separator on the side that enters the
+        // screen first or not
+        var previousItem = null;
+        if (this._items.length) {
+          if (this._rate <= 0) {
+            previousItem = this._items[this._items.length - 1];
+          } else {
+            previousItem = this._items[0];
+          }
         }
+        this._nextItemImmediatelyFollowsPrevious = previousItem && previousItem.getRateWhenAppended() * this._rate >= 0;
+
         var nextItem = void 0;
         this._onItemRequired.some(function (cb) {
           return (0, _helpers.deferException)(function () {
-            nextItem = cb({ immediatelyFollowsPrevious: nextItemImmediatelyFollowsPrevious });
+            nextItem = cb({ immediatelyFollowsPrevious: _this5._nextItemImmediatelyFollowsPrevious });
             return !!nextItem;
           });
         });
@@ -745,6 +754,7 @@ var Marquee = exports.Marquee = function () {
           // _render() again
           this.appendItem(nextItem);
         }
+        this._nextItemImmediatelyFollowsPrevious = false;
       }
     }
   }]);
