@@ -22,8 +22,13 @@ export function loop(marquee, buildersIn=[], seperatorBuilder=null) {
       const $container = document.createElement('div');
       $seperator.style.display = 'inline';
       $item.style.display = 'inline';
-      $container.appendChild($seperator);
-      $container.appendChild($item);
+      if (marquee.getRate() <= 0) {
+        $container.appendChild($seperator);
+        $container.appendChild($item);
+      } else {
+        $container.appendChild($item);
+        $container.appendChild($seperator);
+      }
       $item = $container;
     }
     marquee.appendItem($item);
@@ -32,7 +37,6 @@ export function loop(marquee, buildersIn=[], seperatorBuilder=null) {
   appendItem();
   return {
     update: (newBuilders) => {
-
       // try and start from somewhere that makes sense
       const calculateNewIndex = () => {
         // convert array of function references to array of ids

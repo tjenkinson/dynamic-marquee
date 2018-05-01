@@ -2,7 +2,7 @@ import { DIRECTION } from './direction.js';
 import { size } from './helpers.js';
 
 export class Item {
-  constructor($el, direction) {
+  constructor($el, direction, rateWhenAppended) {
     const $container = document.createElement('div');
     $container.style.display = 'block';
     $container.style.position = 'absolute';
@@ -16,6 +16,7 @@ export class Item {
     this._$container = $container;
     this._$el = $el;
     this._direction = direction;
+    this._rateWhenAppended = rateWhenAppended;
   }
   getSize({ inverse = false } = {}) {
     let dir = this._direction;
@@ -42,6 +43,9 @@ export class Item {
   }
   getOriginalEl() {
     return this._$el;
+  }
+  getRateWhenAppended() {
+    return this._rateWhenAppended;
   }
 }
 

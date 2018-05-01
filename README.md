@@ -66,9 +66,13 @@ if (marquee.isWaitingForItem()) {
 
 You can be notified when an item is required with
 ```js
-marquee.onItemRequired(() => {
+marquee.onItemRequired(({ immediatelyFollowsPrevious }) => {
   // for convenience if you have an item ready to go you can just return it
   // in place of `marquee.appendItem($item);`
+
+  // if `immediatelyFollowsPrevious` is `true`, this would be a good time to add
+  // a seperator on the side that is entering the screen first. See loop.js
+  // for an example.
   return $item;
 });
 ```
