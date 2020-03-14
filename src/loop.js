@@ -1,16 +1,16 @@
 import { toDomEl } from './helpers.js';
 import longestSubstring from 'longest-common-substring';
 
-export function loop(marquee, buildersIn=[], seperatorBuilder=null) {
+export function loop(marquee, buildersIn = [], seperatorBuilder = null) {
   let lastIndex = -1;
   let builders = buildersIn.slice();
 
   const getNextBuilder = (offset = 1) => {
-    const nextIndex = (lastIndex+offset) % builders.length;
+    const nextIndex = (lastIndex + offset) % builders.length;
     return { builder: builders[nextIndex], index: nextIndex };
-  }
+  };
 
-  const appendItem = (immediatelyFollowsPrevious) => {
+  const appendItem = immediatelyFollowsPrevious => {
     if (!builders.length || !marquee.isWaitingForItem()) {
       return;
     }
@@ -33,10 +33,12 @@ export function loop(marquee, buildersIn=[], seperatorBuilder=null) {
     }
     marquee.appendItem($item);
   };
-  marquee.onItemRequired(({ immediatelyFollowsPrevious }) => appendItem(immediatelyFollowsPrevious));
+  marquee.onItemRequired(({ immediatelyFollowsPrevious }) =>
+    appendItem(immediatelyFollowsPrevious)
+  );
   appendItem();
   return {
-    update: (newBuilders) => {
+    update: newBuilders => {
       // try and start from somewhere that makes sense
       const calculateNewIndex = () => {
         // convert array of function references to array of ids
@@ -50,7 +52,10 @@ export function loop(marquee, buildersIn=[], seperatorBuilder=null) {
           return builders.indexOf(b);
         });
 
-        const { startString1, startString2, length } = longestSubstring(buildersStructure, newBuildersStructure);
+        const { startString1, startString2, length } = longestSubstring(
+          buildersStructure,
+          newBuildersStructure
+        );
         if (lastIndex >= startString1 && lastIndex < startString1 + length) {
           // we are in the overlapping region
           return lastIndex + (startString2 - startString1);
