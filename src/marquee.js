@@ -38,13 +38,13 @@ export class Marquee {
     $container.appendChild($innerContainer);
     this._scheduleRender();
   }
-  
+
   // called when there's room for a new item.
   // You can return the item to append next
   onItemRequired(cb) {
     this._onItemRequired.push(cb);
   }
-  
+
   // Called when an item is removed
   onItemRemoved(cb) {
     this._onItemRemoved.push(cb);
@@ -56,7 +56,7 @@ export class Marquee {
   }
 
   getNumItems() {
-    return this._items.filter((item) => item instanceof Item).length;
+    return this._items.filter(item => item instanceof Item).length;
   }
 
   setRate(rate) {
@@ -74,7 +74,7 @@ export class Marquee {
   }
 
   clear() {
-    this._items.forEach(($a) => this._removeItem($a));
+    this._items.forEach($a => this._removeItem($a));
     this._items = [];
     this._waitingForItem = true;
     this._updateContainerSize();
@@ -90,8 +90,8 @@ export class Marquee {
     }
     // convert to div if $el is a string
     $el = toDomEl($el);
-    const itemAlreadyExists = this._items.some((item) => {
-      return (item instanceof Item) && item.getOriginalEl() === $el;
+    const itemAlreadyExists = this._items.some(item => {
+      return item instanceof Item && item.getOriginalEl() === $el;
     });
     if (itemAlreadyExists) {
       throw new Error('Item already exists.');
@@ -106,7 +106,7 @@ export class Marquee {
     defer(() => {
       item.remove();
       if (item instanceof Item) {
-        this._onItemRemoved.forEach((cb) => {
+        this._onItemRemoved.forEach(cb => {
           deferException(() => cb(item.getOriginalEl()));
         });
       }
@@ -138,7 +138,7 @@ export class Marquee {
   }
 
   _enableAnimationHint(enable) {
-    this._items.forEach((item) => item.enableAnimationHint(enable));
+    this._items.forEach(item => item.enableAnimationHint(enable));
   }
 
   _scheduleRender() {
@@ -148,7 +148,9 @@ export class Marquee {
     } else {
       if (!this._requestAnimationID) {
         this._lastUpdateTime = performance.now();
-        this._requestAnimationID = window.requestAnimationFrame(() => this._onRequestAnimationFrame());
+        this._requestAnimationID = window.requestAnimationFrame(() =>
+          this._onRequestAnimationFrame()
+        );
       }
     }
   }
@@ -158,7 +160,7 @@ export class Marquee {
     if (!this._rate || (!this._items.length && !this._pendingItem)) {
       return;
     }
-    
+
     const now = performance.now();
     const timePassed = now - this._lastUpdateTime;
     this._scheduleRender();
@@ -173,7 +175,7 @@ export class Marquee {
   _render() {
     const containerSize = this._containerSize;
     if (this._rate < 0) {
-      while(this._items.length) {
+      while (this._items.length) {
         const item = this._items[0];
         const size = item.getSize();
         if (this._leftItemOffset + size > 0) {
@@ -185,12 +187,12 @@ export class Marquee {
       }
     }
 
-    const offsets = [];  
+    const offsets = [];
     let nextOffset = this._leftItemOffset;
     this._items.some((item, i) => {
       if (nextOffset >= containerSize) {
         if (this._rate > 0) {
-          this._items.splice(i).forEach((a) => this._removeItem(a));
+          this._items.splice(i).forEach(a => this._removeItem(a));
         }
         return true;
       }
@@ -204,7 +206,9 @@ export class Marquee {
       if (this._rate <= 0) {
         if (!this._nextItemImmediatelyFollowsPrevious) {
           // insert virtual item so that it starts off screen
-          this._items.push(new VirtualItem(Math.max(0, containerSize - nextOffset)));
+          this._items.push(
+            new VirtualItem(Math.max(0, containerSize - nextOffset))
+          );
           offsets.push(nextOffset);
           nextOffset = containerSize;
         }
@@ -212,7 +216,11 @@ export class Marquee {
         nextOffset += this._pendingItem.getSize();
         this._items.push(this._pendingItem);
       } else {
-        if (!this._nextItemImmediatelyFollowsPrevious && this._items.length && this._leftItemOffset > 0) {
+        if (
+          !this._nextItemImmediatelyFollowsPrevious &&
+          this._items.length &&
+          this._leftItemOffset > 0
+        ) {
           this._items.unshift(new VirtualItem(this._leftItemOffset));
           offsets.unshift(0);
           this._leftItemOffset = 0;
@@ -230,7 +238,7 @@ export class Marquee {
       this._items.shift();
       this._leftItemOffset = offsets[0] || 0;
     }
-    while (this._items[this._items.length-1] instanceof VirtualItem) {
+    while (this._items[this._items.length - 1] instanceof VirtualItem) {
       offsets.pop();
       this._items.pop();
     }
@@ -241,18 +249,17 @@ export class Marquee {
     if (!this._items.length) {
       this._leftItemOffset = 0;
       defer(() => {
-        this._onAllItemsRemoved.forEach((cb) => {
+        this._onAllItemsRemoved.forEach(cb => {
           deferException(() => cb());
         });
       });
     }
-    
+
     this._nextItemImmediatelyFollowsPrevious = false;
     if (
-      !this._waitingForItem && (
-        (this._rate <= 0 && nextOffset <= containerSize) || 
-        (this._rate > 0 && this._leftItemOffset >= 0)
-      )
+      !this._waitingForItem &&
+      ((this._rate <= 0 && nextOffset <= containerSize) ||
+        (this._rate > 0 && this._leftItemOffset >= 0))
     ) {
       this._waitingForItem = true;
       // if an item is appended immediately below, it would be considered immediately following
@@ -267,12 +274,15 @@ export class Marquee {
           previousItem = this._items[0];
         }
       }
-      this._nextItemImmediatelyFollowsPrevious = previousItem && previousItem.getRateWhenAppended() * this._rate >= 0;
+      this._nextItemImmediatelyFollowsPrevious =
+        previousItem && previousItem.getRateWhenAppended() * this._rate >= 0;
 
       let nextItem;
-      this._onItemRequired.some((cb) => {
+      this._onItemRequired.some(cb => {
         return deferException(() => {
-          nextItem = cb({ immediatelyFollowsPrevious: this._nextItemImmediatelyFollowsPrevious });
+          nextItem = cb({
+            immediatelyFollowsPrevious: this._nextItemImmediatelyFollowsPrevious
+          });
           return !!nextItem;
         });
       });

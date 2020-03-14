@@ -11,7 +11,7 @@ export function defer(fn) {
 export function deferException(cb) {
   try {
     return cb();
-  } catch(e) {
+  } catch (e) {
     defer(() => {
       throw e;
     });
@@ -22,7 +22,7 @@ export function toDomEl($el) {
   if (typeof $el === 'string' || typeof $el === 'number') {
     // helper. convert string to div
     const $div = document.createElement('div');
-    $div.textContent = $el+"";
+    $div.textContent = $el + '';
     return $div;
   }
   return $el;
