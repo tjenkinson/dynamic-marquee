@@ -41,7 +41,7 @@
     "@rollup/plugin-node-resolve": "^7.1.1",
     "husky": "^4.2.3",
     "longest-common-substring": "0.0.1",
-    "prettier": "^1.19.1",
+    "prettier": "^2.0.1",
     "rollup": "^2.0.6",
     "rollup-plugin-babel": "^4.4.0"
   }
