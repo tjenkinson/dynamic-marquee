@@ -19,6 +19,7 @@ jobs:
       - name: npm install and build
         run: |
           npm ci
+          npm run lint
           npm run build
         env:
           CI: true
