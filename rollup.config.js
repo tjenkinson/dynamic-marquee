@@ -7,14 +7,14 @@ export default {
   plugins: [
     resolve({ browser: true }),
     commonjs(),
-    babel({ exclude: 'node_modules/**' })
+    babel({ exclude: 'node_modules/**' }),
   ],
-  onwarn: e => {
+  onwarn: (e) => {
     throw new Error(e);
   },
   output: {
     name: 'dynamicMarquee',
     file: 'dist/dynamic-marquee.js',
-    format: 'umd'
-  }
+    format: 'umd',
+  },
 };
