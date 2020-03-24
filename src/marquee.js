@@ -9,7 +9,7 @@ export class Marquee {
       // pixels/s
       rate = -25,
       // make the direction down instead of right
-      upDown = false
+      upDown = false,
     } = {}
   ) {
     this._rendering = false;
@@ -56,7 +56,7 @@ export class Marquee {
   }
 
   getNumItems() {
-    return this._items.filter(item => item instanceof Item).length;
+    return this._items.filter((item) => item instanceof Item).length;
   }
 
   setRate(rate) {
@@ -74,7 +74,7 @@ export class Marquee {
   }
 
   clear() {
-    this._items.forEach($a => this._removeItem($a));
+    this._items.forEach(($a) => this._removeItem($a));
     this._items = [];
     this._waitingForItem = true;
     this._updateContainerSize();
@@ -90,7 +90,7 @@ export class Marquee {
     }
     // convert to div if $el is a string
     $el = toDomEl($el);
-    const itemAlreadyExists = this._items.some(item => {
+    const itemAlreadyExists = this._items.some((item) => {
       return item instanceof Item && item.getOriginalEl() === $el;
     });
     if (itemAlreadyExists) {
@@ -106,7 +106,7 @@ export class Marquee {
     defer(() => {
       item.remove();
       if (item instanceof Item) {
-        this._onItemRemoved.forEach(cb => {
+        this._onItemRemoved.forEach((cb) => {
           deferException(() => cb(item.getOriginalEl()));
         });
       }
@@ -138,7 +138,7 @@ export class Marquee {
   }
 
   _enableAnimationHint(enable) {
-    this._items.forEach(item => item.enableAnimationHint(enable));
+    this._items.forEach((item) => item.enableAnimationHint(enable));
   }
 
   _scheduleRender() {
@@ -192,7 +192,7 @@ export class Marquee {
     this._items.some((item, i) => {
       if (nextOffset >= containerSize) {
         if (this._rate > 0) {
-          this._items.splice(i).forEach(a => this._removeItem(a));
+          this._items.splice(i).forEach((a) => this._removeItem(a));
         }
         return true;
       }
@@ -249,7 +249,7 @@ export class Marquee {
     if (!this._items.length) {
       this._leftItemOffset = 0;
       defer(() => {
-        this._onAllItemsRemoved.forEach(cb => {
+        this._onAllItemsRemoved.forEach((cb) => {
           deferException(() => cb());
         });
       });
@@ -278,10 +278,11 @@ export class Marquee {
         previousItem && previousItem.getRateWhenAppended() * this._rate >= 0;
 
       let nextItem;
-      this._onItemRequired.some(cb => {
+      this._onItemRequired.some((cb) => {
         return deferException(() => {
           nextItem = cb({
-            immediatelyFollowsPrevious: this._nextItemImmediatelyFollowsPrevious
+            immediatelyFollowsPrevious: this
+              ._nextItemImmediatelyFollowsPrevious,
           });
           return !!nextItem;
         });

@@ -10,7 +10,7 @@ export function loop(marquee, buildersIn = [], seperatorBuilder = null) {
     return { builder: builders[nextIndex], index: nextIndex };
   };
 
-  const appendItem = immediatelyFollowsPrevious => {
+  const appendItem = (immediatelyFollowsPrevious) => {
     if (!builders.length || !marquee.isWaitingForItem()) {
       return;
     }
@@ -38,7 +38,7 @@ export function loop(marquee, buildersIn = [], seperatorBuilder = null) {
   );
   appendItem();
   return {
-    update: newBuilders => {
+    update: (newBuilders) => {
       // try and start from somewhere that makes sense
       const calculateNewIndex = () => {
         // convert array of function references to array of ids
@@ -66,6 +66,6 @@ export function loop(marquee, buildersIn = [], seperatorBuilder = null) {
       lastIndex = calculateNewIndex();
       builders = newBuilders.slice();
       appendItem(false);
-    }
+    },
   };
 }

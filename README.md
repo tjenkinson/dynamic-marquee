@@ -59,7 +59,7 @@ const marquee = new Marquee(document.getElementById('marquee'));
 ```js
 const marquee = new Marquee(document.getElementById('marquee'), {
   rate: 20, // 20 pixels/s downwards
-  upDown: true // downwards instead of to the right
+  upDown: true, // downwards instead of to the right
 });
 ```
 
@@ -122,7 +122,7 @@ marquee.clear();
 You can be notified when an item has been removed with:
 
 ```js
-marquee.onItemRemove($el => {
+marquee.onItemRemove(($el) => {
   // $el has just been removed
 });
 ```
