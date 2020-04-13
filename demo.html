@@ -1,6 +1,9 @@
 <html>
   <head>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/dynamic-marquee@1"></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/dynamic-marquee@1"
+    ></script>
     <!-- <script type="text/javascript" src="dist/dynamic-marquee.js"></script> -->
     <style>
       #marquee {
@@ -22,17 +25,31 @@
     <div id="marquee"></div>
     <script type="text/javascript">
       var $marquee = document.getElementById('marquee');
-      var marquee = window.m = new dynamicMarquee.Marquee($marquee, { rate: -100 });
-      window.l = dynamicMarquee.loop(marquee, [
-        function() { return 'Contrary to popular belief, Lorem Ipsum is not simply random text'; },
-        function() { return 'It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old'; },
-        function() { return 'Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source'; },
-        function() { return 'RLorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC'; }
-      ], function() {
-        var $separator = document.createElement('div');
-        $separator.innerHTML = '&nbsp|&nbsp';
-        return $separator;
-      });
+      var marquee = (window.m = new dynamicMarquee.Marquee($marquee, {
+        rate: -100,
+      }));
+      window.l = dynamicMarquee.loop(
+        marquee,
+        [
+          function () {
+            return 'Contrary to popular belief, Lorem Ipsum is not simply random text';
+          },
+          function () {
+            return 'It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old';
+          },
+          function () {
+            return 'Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source';
+          },
+          function () {
+            return 'RLorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC';
+          },
+        ],
+        function () {
+          var $separator = document.createElement('div');
+          $separator.innerHTML = '&nbsp|&nbsp';
+          return $separator;
+        }
+      );
     </script>
   </body>
 </html>

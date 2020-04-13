@@ -6,8 +6,8 @@
   "scripts": {
     "build": "rollup --config rollup.config.js",
     "watch": "rollup --config rollup.config.js --watch",
-    "prettier": "prettier --write **/*.{js,md}",
-    "lint": "prettier --check **/*.{js,md}",
+    "prettier": "prettier --write .",
+    "lint": "prettier --check .",
     "preversion": "npm run build"
   },
   "files": [
