@@ -8,8 +8,6 @@ export class Item {
     $container.style.position = 'absolute';
     $container.style.margin = '0';
     $container.style.padding = '0';
-    $container.style[this._direction === DIRECTION.RIGHT ? 'top' : 'left'] =
-      '0';
     $container.style.whiteSpace = 'nowrap';
     $container.style.willChange = 'auto';
     $container.appendChild($el);
