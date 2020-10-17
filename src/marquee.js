@@ -16,7 +16,10 @@ export class Marquee {
     this._waitingForItem = true;
     this._nextItemImmediatelyFollowsPrevious = false;
     this._rate = rate;
+    this._lastEffectiveRate = rate;
     this._justReversedRate = true;
+    this._windowWidth = window.innerWidth;
+    this._windowHeight = window.innerHeight;
     this._direction = upDown ? DIRECTION.DOWN : DIRECTION.RIGHT;
     this._onItemRequired = [];
     this._onItemRemoved = [];
@@ -67,11 +70,14 @@ export class Marquee {
         this._scheduleRender();
       }
     }
-    if (rate * this._rate < 0) {
+    if (rate * this._lastEffectiveRate < 0) {
       this._justReversedRate = true;
       this._waitingForItem = false;
     }
     this._rate = rate;
+    if (rate) {
+      this._lastEffectiveRate = rate;
+    }
   }
 
   getRate() {
@@ -162,13 +168,15 @@ export class Marquee {
 
   _onRequestAnimationFrame() {
     this._requestAnimationID = null;
-    if (!this._rate || (!this._items.length && !this._pendingItem)) {
+    if (!this._items.length && !this._pendingItem) {
       return;
     }
 
     const now = performance.now();
     const timePassed = now - this._lastUpdateTime;
-    this._scheduleRender();
+    if (this._rate) {
+      this._scheduleRender();
+    }
     this._rendering = true;
     const shiftAmount = this._rate * (timePassed / 1000);
     this._leftItemOffset += shiftAmount;
@@ -248,7 +256,16 @@ export class Marquee {
       this._items.pop();
     }
 
-    offsets.forEach((offset, i) => this._items[i].setOffset(offset));
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const windowResized =
+      windowWidth !== this._windowWidth || windowHeight !== this._windowHeight;
+    this._windowWidth = windowWidth;
+    this._windowHeight = windowHeight;
+
+    offsets.forEach((offset, i) =>
+      this._items[i].setOffset(offset, this._rate, windowResized)
+    );
     this._updateContainerSize();
 
     if (!this._items.length) {
