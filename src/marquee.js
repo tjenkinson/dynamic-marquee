@@ -16,6 +16,7 @@ export class Marquee {
     this._waitingForItem = true;
     this._nextItemImmediatelyFollowsPrevious = false;
     this._rate = rate;
+    this._justReversedRate = true;
     this._direction = upDown ? DIRECTION.DOWN : DIRECTION.RIGHT;
     this._onItemRequired = [];
     this._onItemRemoved = [];
@@ -66,6 +67,9 @@ export class Marquee {
         this._scheduleRender();
       }
     }
+    if (rate * this._rate < 0) {
+      this._justReversedRate = true;
+    }
     this._rate = rate;
   }
 
@@ -97,7 +101,7 @@ export class Marquee {
       throw new Error('Item already exists.');
     }
     this._waitingForItem = false;
-    this._pendingItem = new Item($el, this._direction, this._rate);
+    this._pendingItem = new Item($el, this._direction);
     this._pendingItem.enableAnimationHint(!!this._rate);
     this._scheduleRender();
   }
@@ -256,6 +260,9 @@ export class Marquee {
     }
 
     this._nextItemImmediatelyFollowsPrevious = false;
+    const justReversedRate = this._justReversedRate;
+    this._justReversedRate = false;
+
     if (
       !this._waitingForItem &&
       ((this._rate <= 0 && nextOffset <= containerSize) ||
@@ -263,19 +270,10 @@ export class Marquee {
     ) {
       this._waitingForItem = true;
       // if an item is appended immediately below, it would be considered immediately following
-      // the previous if the item it would follow was appended from the same side
+      // the previous if we haven't just changed direction.
       // This is useful when deciding whether to add a separator on the side that enters the
       // screen first or not
-      let previousItem = null;
-      if (this._items.length) {
-        if (this._rate <= 0) {
-          previousItem = this._items[this._items.length - 1];
-        } else {
-          previousItem = this._items[0];
-        }
-      }
-      this._nextItemImmediatelyFollowsPrevious =
-        previousItem && previousItem.getRateWhenAppended() * this._rate >= 0;
+      this._nextItemImmediatelyFollowsPrevious = !justReversedRate;
 
       let nextItem;
       this._onItemRequired.some((cb) => {
