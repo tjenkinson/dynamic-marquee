@@ -54,7 +54,7 @@ export class Item {
         this._$container.style.transform = `translateY(${offset}px)`;
       }
 
-      this._$container.style.transition = null;
+      this._$container.style.transition = '';
       this._$container.offsetLeft;
     }
 
