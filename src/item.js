@@ -41,7 +41,7 @@ export class Item {
     const timePassed = performance.now() - transitionState.time;
     const offsetNow = this._calculateOffset();
     const inSync =
-      rate === transitionState.rate && Math.abs(offsetNow - offset) < 10;
+      rate === transitionState.rate && Math.abs(offsetNow - offset) < 4;
 
     if (!force && timePassed < transitionDuration - 10000 && inSync) {
       return;
