@@ -69,6 +69,7 @@ export class Marquee {
     }
     if (rate * this._rate < 0) {
       this._justReversedRate = true;
+      this._waitingForItem = false;
     }
     this._rate = rate;
   }
