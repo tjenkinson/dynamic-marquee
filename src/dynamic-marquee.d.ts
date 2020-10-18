@@ -8,7 +8,9 @@ export type Options = {
 export class Marquee {
   constructor($container: HTMLElement, options?: Options);
   onItemRequired(
-    callback: (data: { immediatelyFollowsPrevious: boolean }) => void
+    callback: (data: {
+      immediatelyFollowsPrevious: boolean;
+    }) => HTMLElement | void
   );
   onItemRemoved(callback: ($el: HTMLElement) => void): void;
   onAllItemsRemoved(callback: () => void): void;
@@ -19,3 +21,12 @@ export class Marquee {
   isWaitingForItem(): boolean;
   appendItem($el: HTMLElement): void;
 }
+
+export type LoopBuilder = () => HTMLElement;
+export type LoopReturn = { update: (newBuilders: LoopBuilder[]) => void };
+
+export function loop(
+  marquee: Marquee,
+  buildersIn?: LoopBuilder[],
+  seperatorBuilder?: LoopBuilder | null
+): LoopReturn;
