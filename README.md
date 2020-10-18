@@ -109,6 +109,8 @@ You can change the rate at any time, and set to 0 to pause.
 marquee.setRate(-20);
 ```
 
+Note if you change the direction, `isWaitingForItem()` will change to `false`, and `onItemRequired()` will be called again when needed.
+
 ## Reset
 
 To remove all items call
@@ -122,7 +124,7 @@ marquee.clear();
 You can be notified when an item has been removed with:
 
 ```js
-marquee.onItemRemove(($el) => {
+marquee.onItemRemoved(($el) => {
   // $el has just been removed
 });
 ```

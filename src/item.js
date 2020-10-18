@@ -1,8 +1,10 @@
 import { DIRECTION } from './direction.js';
 import { size } from './helpers.js';
 
+const transitionDuration = 60000;
+
 export class Item {
-  constructor($el, direction, rateWhenAppended) {
+  constructor($el, direction) {
     const $container = document.createElement('div');
     $container.style.display = 'block';
     $container.style.position = 'absolute';
@@ -15,7 +17,7 @@ export class Item {
     this._$container = $container;
     this._$el = $el;
     this._direction = direction;
-    this._rateWhenAppended = rateWhenAppended;
+    this._transitionState = null;
   }
   getSize({ inverse = false } = {}) {
     let dir = this._direction;
@@ -24,12 +26,41 @@ export class Item {
     }
     return size(this._$container, dir);
   }
-  setOffset(offset) {
-    if (this._direction === DIRECTION.RIGHT) {
-      this._$container.style.transform = `translateX(${offset}px)`;
-    } else {
-      this._$container.style.transform = `translateY(${offset}px)`;
+  setOffset(offset, rate, force) {
+    const transitionState = this._transitionState;
+    if (transitionState && !force) {
+      const timePassed = performance.now() - transitionState.time;
+      if (
+        timePassed < transitionDuration - 10000 &&
+        transitionState.rate === rate
+      ) {
+        return;
+      }
     }
+
+    if (!transitionState || force) {
+      if (this._direction === DIRECTION.RIGHT) {
+        this._$container.style.transform = `translateX(${offset}px)`;
+      } else {
+        this._$container.style.transform = `translateY(${offset}px)`;
+      }
+
+      this._$container.style.transition = '';
+      this._$container.offsetLeft;
+    }
+
+    const futureOffset = offset + (rate / 1000) * transitionDuration;
+    if (this._direction === DIRECTION.RIGHT) {
+      this._$container.style.transform = `translateX(${futureOffset}px)`;
+    } else {
+      this._$container.style.transform = `translateY(${futureOffset}px)`;
+    }
+    this._$container.style.transition = `transform ${transitionDuration}ms linear`;
+
+    this._transitionState = {
+      time: performance.now(),
+      rate,
+    };
   }
   enableAnimationHint(enable) {
     this._$container.style.willChange = enable ? 'transform' : 'auto';
@@ -42,9 +73,6 @@ export class Item {
   }
   getOriginalEl() {
     return this._$el;
-  }
-  getRateWhenAppended() {
-    return this._rateWhenAppended;
   }
 }
 
