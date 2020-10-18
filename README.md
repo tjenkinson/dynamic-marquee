@@ -124,7 +124,7 @@ marquee.clear();
 You can be notified when an item has been removed with:
 
 ```js
-marquee.onItemRemove(($el) => {
+marquee.onItemRemoved(($el) => {
   // $el has just been removed
 });
 ```
