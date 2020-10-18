@@ -21,3 +21,12 @@ export class Marquee {
   isWaitingForItem(): boolean;
   appendItem($el: HTMLElement): void;
 }
+
+export type LoopBuilder = () => HTMLElement;
+export type LoopReturn = { update: (newBuilders: LoopBuilder[]) => void };
+
+export function loop(
+  marquee: Marquee,
+  buildersIn?: LoopBuilder[],
+  seperatorBuilder?: LoopBuilder | null
+): LoopReturn;
