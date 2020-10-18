@@ -277,7 +277,7 @@ export class Marquee {
 
     offsets.forEach((offset, i) => {
       const item = this._items[i];
-      const hasJumped = item.offset + shiftAmount !== offset;
+      const hasJumped = Math.abs(item.offset + shiftAmount - offset) >= 1;
       item.item.setOffset(offset, this._rate, windowResized || hasJumped);
       item.offset = offset;
     });
