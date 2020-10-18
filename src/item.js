@@ -17,16 +17,7 @@ export class Item {
     this._$container = $container;
     this._$el = $el;
     this._direction = direction;
-    this._transitionState = {
-      time: performance.now(),
-      offset: 0,
-      rate: 0,
-    };
-  }
-  _calculateOffset() {
-    const transitionState = this._transitionState;
-    const timePassed = performance.now() - transitionState.time;
-    return transitionState.offset + timePassed * (transitionState.rate / 1000);
+    this._transitionState = null;
   }
   getSize({ inverse = false } = {}) {
     let dir = this._direction;
@@ -37,17 +28,17 @@ export class Item {
   }
   setOffset(offset, rate, force) {
     const transitionState = this._transitionState;
-
-    const timePassed = performance.now() - transitionState.time;
-    const offsetNow = this._calculateOffset();
-    const inSync =
-      rate === transitionState.rate && Math.abs(offsetNow - offset) < 4;
-
-    if (!force && timePassed < transitionDuration - 10000 && inSync) {
-      return;
+    if (transitionState && !force) {
+      const timePassed = performance.now() - transitionState.time;
+      if (
+        timePassed < transitionDuration - 10000 &&
+        transitionState.rate === rate
+      ) {
+        return;
+      }
     }
 
-    if (!inSync || force) {
+    if (!transitionState || force) {
       if (this._direction === DIRECTION.RIGHT) {
         this._$container.style.transform = `translateX(${offset}px)`;
       } else {
@@ -68,7 +59,6 @@ export class Item {
 
     this._transitionState = {
       time: performance.now(),
-      offset,
       rate,
     };
   }

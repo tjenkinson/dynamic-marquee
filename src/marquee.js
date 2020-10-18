@@ -17,7 +17,7 @@ export class Marquee {
     this._nextItemImmediatelyFollowsPrevious = false;
     this._rate = rate;
     this._lastEffectiveRate = rate;
-    this._justReversedRate = true;
+    this._justReversedRate = false;
     this._windowWidth = window.innerWidth;
     this._windowHeight = window.innerHeight;
     this._direction = upDown ? DIRECTION.DOWN : DIRECTION.RIGHT;
@@ -60,7 +60,7 @@ export class Marquee {
   }
 
   getNumItems() {
-    return this._items.filter((item) => item instanceof Item).length;
+    return this._items.filter(({ item }) => item instanceof Item).length;
   }
 
   setRate(rate) {
@@ -85,7 +85,7 @@ export class Marquee {
   }
 
   clear() {
-    this._items.forEach(($a) => this._removeItem($a));
+    this._items.forEach(({ item }) => this._removeItem(item));
     this._items = [];
     this._waitingForItem = true;
     this._updateContainerSize();
@@ -101,7 +101,7 @@ export class Marquee {
     }
     // convert to div if $el is a string
     $el = toDomEl($el);
-    const itemAlreadyExists = this._items.some((item) => {
+    const itemAlreadyExists = this._items.some(({ item }) => {
       return item instanceof Item && item.getOriginalEl() === $el;
     });
     if (itemAlreadyExists) {
@@ -110,10 +110,14 @@ export class Marquee {
     this._waitingForItem = false;
     this._pendingItem = new Item($el, this._direction);
     this._pendingItem.enableAnimationHint(!!this._rate);
-    this._scheduleRender();
+    if (this._rendering) {
+      this._render(0);
+    } else {
+      this._scheduleRender();
+    }
   }
 
-  _removeItem(item) {
+  _removeItem({ item }) {
     defer(() => {
       item.remove();
       if (item instanceof Item) {
@@ -128,7 +132,7 @@ export class Marquee {
   // This is needed because the items are posisitioned absolutely, so not in normal flow.
   // Without this, the height of the container would always be 0px, which is not useful
   _updateContainerSize() {
-    const maxSize = this._items.reduce((size, item) => {
+    const maxSize = this._items.reduce((size, { item }) => {
       if (item instanceof VirtualItem) {
         return size;
       }
@@ -149,20 +153,15 @@ export class Marquee {
   }
 
   _enableAnimationHint(enable) {
-    this._items.forEach((item) => item.enableAnimationHint(enable));
+    this._items.forEach(({ item }) => item.enableAnimationHint(enable));
   }
 
   _scheduleRender() {
-    if (this._rendering) {
-      // we are already rendering, so call the render method synchronously
-      this._render();
-    } else {
-      if (!this._requestAnimationID) {
-        this._lastUpdateTime = performance.now();
-        this._requestAnimationID = window.requestAnimationFrame(() =>
-          this._onRequestAnimationFrame()
-        );
-      }
+    if (!this._requestAnimationID) {
+      this._lastUpdateTime = performance.now();
+      this._requestAnimationID = window.requestAnimationFrame(() =>
+        this._onRequestAnimationFrame()
+      );
     }
   }
 
@@ -179,17 +178,17 @@ export class Marquee {
     }
     this._rendering = true;
     const shiftAmount = this._rate * (timePassed / 1000);
-    this._leftItemOffset += shiftAmount;
     this._containerSize = size(this._$container, this._direction);
-    deferException(() => this._render());
+    deferException(() => this._render(shiftAmount));
     this._rendering = false;
   }
 
-  _render() {
+  _render(shiftAmount) {
+    this._leftItemOffset += shiftAmount;
     const containerSize = this._containerSize;
     if (this._rate < 0) {
       while (this._items.length) {
-        const item = this._items[0];
+        const { item } = this._items[0];
         const size = item.getSize();
         if (this._leftItemOffset + size > 0) {
           break;
@@ -202,12 +201,12 @@ export class Marquee {
 
     const offsets = [];
     let nextOffset = this._leftItemOffset;
-    this._items.some((item, i) => {
+    this._items.some(({ item }, i) => {
       if (nextOffset >= containerSize) {
         if (this._rate > 0) {
           this._items.splice(i).forEach((a) => this._removeItem(a));
+          return true;
         }
-        return true;
       }
       offsets.push(nextOffset);
       nextOffset += item.getSize();
@@ -219,39 +218,52 @@ export class Marquee {
       if (this._rate <= 0) {
         if (!this._nextItemImmediatelyFollowsPrevious) {
           // insert virtual item so that it starts off screen
-          this._items.push(
-            new VirtualItem(Math.max(0, containerSize - nextOffset))
-          );
+          this._items.push({
+            item: new VirtualItem(Math.max(0, containerSize - nextOffset)),
+            offset: nextOffset,
+          });
           offsets.push(nextOffset);
           nextOffset = containerSize;
         }
+        this._items.push({
+          item: this._pendingItem,
+          offset: nextOffset,
+        });
         offsets.push(nextOffset);
         nextOffset += this._pendingItem.getSize();
-        this._items.push(this._pendingItem);
       } else {
         if (
           !this._nextItemImmediatelyFollowsPrevious &&
           this._items.length &&
           this._leftItemOffset > 0
         ) {
-          this._items.unshift(new VirtualItem(this._leftItemOffset));
+          this._items.unshift({
+            item: new VirtualItem(this._leftItemOffset),
+            offset: 0,
+          });
           offsets.unshift(0);
           this._leftItemOffset = 0;
         }
         this._leftItemOffset -= this._pendingItem.getSize();
         offsets.unshift(this._leftItemOffset);
-        this._items.unshift(this._pendingItem);
+        this._items.unshift({
+          item: this._pendingItem,
+          offset: this._leftItemOffset,
+        });
       }
       this._pendingItem = null;
     }
 
     // trim virtual items
-    while (this._items[0] instanceof VirtualItem) {
+    while (this._items.length && this._items[0].item instanceof VirtualItem) {
       offsets.shift();
       this._items.shift();
       this._leftItemOffset = offsets[0] || 0;
     }
-    while (this._items[this._items.length - 1] instanceof VirtualItem) {
+    while (
+      this._items.length &&
+      this._items[this._items.length - 1].item instanceof VirtualItem
+    ) {
       offsets.pop();
       this._items.pop();
     }
@@ -263,9 +275,12 @@ export class Marquee {
     this._windowWidth = windowWidth;
     this._windowHeight = windowHeight;
 
-    offsets.forEach((offset, i) =>
-      this._items[i].setOffset(offset, this._rate, windowResized)
-    );
+    offsets.forEach((offset, i) => {
+      const item = this._items[i];
+      const hasJumped = item.offset + shiftAmount !== offset;
+      item.item.setOffset(offset, this._rate, windowResized || hasJumped);
+      item.offset = offset;
+    });
     this._updateContainerSize();
 
     if (!this._items.length) {
@@ -304,8 +319,7 @@ export class Marquee {
         });
       });
       if (nextItem) {
-        // Note appendItem() will call _scheduleRender(), which will synchronously call
-        // _render() again
+        // Note appendItem() will call _render() synchronously again
         this.appendItem(nextItem);
       }
       this._nextItemImmediatelyFollowsPrevious = false;
