@@ -28,17 +28,15 @@ export class Item {
   }
   setOffset(offset, rate, force) {
     const transitionState = this._transitionState;
+    const rateChanged = !transitionState || transitionState.rate !== rate;
     if (transitionState && !force) {
       const timePassed = performance.now() - transitionState.time;
-      if (
-        timePassed < transitionDuration - 10000 &&
-        transitionState.rate === rate
-      ) {
+      if (timePassed < transitionDuration - 10000 && !rateChanged) {
         return;
       }
     }
 
-    if (!transitionState || force) {
+    if (force || rateChanged) {
       if (this._direction === DIRECTION.RIGHT) {
         this._$container.style.transform = `translateX(${offset}px)`;
       } else {
@@ -55,7 +53,10 @@ export class Item {
     } else {
       this._$container.style.transform = `translateY(${futureOffset}px)`;
     }
-    this._$container.style.transition = `transform ${transitionDuration}ms linear`;
+
+    if (rate) {
+      this._$container.style.transition = `transform ${transitionDuration}ms linear`;
+    }
 
     this._transitionState = {
       time: performance.now(),
