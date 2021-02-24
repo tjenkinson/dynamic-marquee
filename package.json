@@ -41,7 +41,7 @@
     "@babel/preset-env": "^7.8.7",
     "@rollup/plugin-commonjs": "^16.0.0",
     "@rollup/plugin-node-resolve": "^10.0.0",
-    "husky": "^4.2.3",
+    "husky": "^5.1.1",
     "longest-common-substring": "0.0.1",
     "prettier": "^2.0.2",
     "rollup": "^2.0.6",
