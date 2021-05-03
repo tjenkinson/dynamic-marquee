@@ -1,6 +1,6 @@
 {
   "name": "dynamic-marquee",
-  "version": "1.3.2",
+  "version": "2.0.0",
   "description": "A small library for creating marquees.",
   "main": "./dist/dynamic-marquee.js",
   "types": "./dist/dynamic-marquee.d.ts",
