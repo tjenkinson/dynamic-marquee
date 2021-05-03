@@ -35,7 +35,7 @@ or
 ```html
 <script
   type="text/javascript"
-  src="https://cdn.jsdelivr.net/npm/dynamic-marquee@1"
+  src="https://cdn.jsdelivr.net/npm/dynamic-marquee@2"
 ></script>
 <script type="text/javascript">
   const Marquee = dynamicMarquee.Marquee;
