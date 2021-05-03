@@ -32,10 +32,9 @@ export class Marquee {
     $innerContainer.style.position = 'relative';
     $innerContainer.style.display = 'inline-block';
     this._$container = $innerContainer;
-    this._containerSizeInverse = null;
-    if (this._direction === DIRECTION.RIGHT) {
-      $innerContainer.style.width = '100%';
-    } else {
+    this._containerSize = null;
+    $innerContainer.style.width = '100%';
+    if (this._direction === DIRECTION.DOWN) {
       $innerContainer.style.height = '100%';
     }
     this._updateContainerSize();
@@ -130,8 +129,12 @@ export class Marquee {
 
   // update size of container so that the marquee items fit inside it.
   // This is needed because the items are posisitioned absolutely, so not in normal flow.
-  // Without this, the height of the container would always be 0px, which is not useful
+  // Without this, for DIRECTION.RIGHT, the height of the container would always be 0px, which is not useful
   _updateContainerSize() {
+    if (this._direction === DIRECTION.DOWN) {
+      return;
+    }
+
     const maxSize = this._items.reduce((size, { item }) => {
       if (item instanceof VirtualItem) {
         return size;
@@ -142,13 +145,10 @@ export class Marquee {
       }
       return size;
     }, 0);
-    if (this._containerSizeInverse !== maxSize) {
-      this._containerSizeInverse = maxSize;
-      if (this._direction === DIRECTION.RIGHT) {
-        this._$container.style.height = `${maxSize}px`;
-      } else {
-        this._$container.style.width = `${maxSize}px`;
-      }
+
+    if (this._containerSize !== maxSize) {
+      this._containerSize = maxSize;
+      this._$container.style.height = `${maxSize}px`;
     }
   }
 
