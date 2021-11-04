@@ -22,7 +22,7 @@ export class Marquee {
   appendItem($el: HTMLElement): void;
 }
 
-export type LoopBuilder = () => HTMLElement;
+export type LoopBuilder = () => HTMLElement | string | number;
 export type LoopReturn = { update: (newBuilders: LoopBuilder[]) => void };
 
 export function loop(
