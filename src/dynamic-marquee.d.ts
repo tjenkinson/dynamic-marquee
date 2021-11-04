@@ -11,7 +11,7 @@ export class Marquee {
     callback: (data: {
       immediatelyFollowsPrevious: boolean;
     }) => HTMLElement | void
-  );
+  ): void;
   onItemRemoved(callback: ($el: HTMLElement) => void): void;
   onAllItemsRemoved(callback: () => void): void;
   getNumItems(): number;
