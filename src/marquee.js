@@ -10,11 +10,13 @@ export class Marquee {
       rate = -25,
       // make the direction down instead of right
       upDown = false,
+      // start on screen
+      startOnScreen = false,
     } = {}
   ) {
     this._rendering = false;
     this._waitingForItem = true;
-    this._nextItemImmediatelyFollowsPrevious = false;
+    this._nextItemImmediatelyFollowsPrevious = startOnScreen;
     this._rate = rate;
     this._lastEffectiveRate = rate;
     this._justReversedRate = false;
@@ -244,7 +246,9 @@ export class Marquee {
         offsets.push(nextOffset);
         nextOffset += this._pendingItem.getSize();
       } else {
-        if (
+        if (this._nextItemImmediatelyFollowsPrevious && !this._items.length) {
+          this._leftItemOffset = containerSize;
+        } else if (
           !this._nextItemImmediatelyFollowsPrevious &&
           this._items.length &&
           this._leftItemOffset > 0
