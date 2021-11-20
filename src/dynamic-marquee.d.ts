@@ -19,7 +19,7 @@ export class Marquee {
   getRate(): number;
   clear(): void;
   isWaitingForItem(): boolean;
-  appendItem($el: HTMLElement): void;
+  appendItem($el: HTMLElement | string | number): void;
 }
 
 export type LoopBuilder = () => HTMLElement | string | number;
