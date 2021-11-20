@@ -3,6 +3,7 @@ export as namespace DynamicMarquee;
 export type Options = {
   rate?: number;
   upDown?: boolean;
+  startOnScreen?: boolean;
 };
 
 export class Marquee {
