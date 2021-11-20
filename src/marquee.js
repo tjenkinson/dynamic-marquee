@@ -69,10 +69,22 @@ export class Marquee {
         this._scheduleRender();
       }
     }
+
     if (rate * this._lastEffectiveRate < 0) {
-      this._justReversedRate = true;
-      this._waitingForItem = false;
+      this._justReversedRate = !this._justReversedRate;
+
+      if (rate <= 0) {
+        const containerSize = this._containerSize;
+        let nextOffset = this._leftItemOffset;
+        this._items.forEach(({ item }) => {
+          nextOffset += item.getSize();
+        });
+        this._waitingForItem = nextOffset <= containerSize;
+      } else {
+        this._waitingForItem = this._leftItemOffset >= 0;
+      }
     }
+
     this._rate = rate;
     if (rate) {
       this._lastEffectiveRate = rate;
