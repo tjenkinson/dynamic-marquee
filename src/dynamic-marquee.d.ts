@@ -11,7 +11,7 @@ export class Marquee {
     callback: (data: {
       immediatelyFollowsPrevious: boolean;
     }) => HTMLElement | void
-  );
+  ): void;
   onItemRemoved(callback: ($el: HTMLElement) => void): void;
   onAllItemsRemoved(callback: () => void): void;
   getNumItems(): number;
@@ -19,10 +19,10 @@ export class Marquee {
   getRate(): number;
   clear(): void;
   isWaitingForItem(): boolean;
-  appendItem($el: HTMLElement): void;
+  appendItem($el: HTMLElement | string | number): void;
 }
 
-export type LoopBuilder = () => HTMLElement;
+export type LoopBuilder = () => HTMLElement | string | number;
 export type LoopReturn = { update: (newBuilders: LoopBuilder[]) => void };
 
 export function loop(
