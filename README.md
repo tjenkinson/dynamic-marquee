@@ -60,6 +60,7 @@ const marquee = new Marquee(document.getElementById('marquee'));
 const marquee = new Marquee(document.getElementById('marquee'), {
   rate: 20, // 20 pixels/s downwards
   upDown: true, // downwards instead of to the right
+  startOnScreen: false, // start on screen
 });
 ```
 

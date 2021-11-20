@@ -10,11 +10,13 @@ export class Marquee {
       rate = -25,
       // make the direction down instead of right
       upDown = false,
+      // start on screen
+      startOnScreen = false,
     } = {}
   ) {
     this._rendering = false;
     this._waitingForItem = true;
-    this._nextItemImmediatelyFollowsPrevious = false;
+    this._nextItemImmediatelyFollowsPrevious = startOnScreen;
     this._rate = rate;
     this._lastEffectiveRate = rate;
     this._justReversedRate = false;
@@ -32,12 +34,12 @@ export class Marquee {
     $innerContainer.style.position = 'relative';
     $innerContainer.style.display = 'inline-block';
     this._$container = $innerContainer;
-    this._containerSize = null;
+    this._containerInverseSize = null;
     $innerContainer.style.width = '100%';
     if (this._direction === DIRECTION.DOWN) {
       $innerContainer.style.height = '100%';
     }
-    this._updateContainerSize();
+    this._updateContainerInverseSize();
     $container.appendChild($innerContainer);
     this._scheduleRender();
   }
@@ -69,10 +71,22 @@ export class Marquee {
         this._scheduleRender();
       }
     }
+
     if (rate * this._lastEffectiveRate < 0) {
-      this._justReversedRate = true;
-      this._waitingForItem = false;
+      this._justReversedRate = !this._justReversedRate;
+
+      if (rate <= 0) {
+        const containerSize = this._containerSize;
+        let nextOffset = this._leftItemOffset;
+        this._items.forEach(({ item }) => {
+          nextOffset += item.getSize();
+        });
+        this._waitingForItem = nextOffset <= containerSize;
+      } else {
+        this._waitingForItem = this._leftItemOffset >= 0;
+      }
     }
+
     this._rate = rate;
     if (rate) {
       this._lastEffectiveRate = rate;
@@ -87,7 +101,7 @@ export class Marquee {
     this._items.forEach(({ item }) => this._removeItem(item));
     this._items = [];
     this._waitingForItem = true;
-    this._updateContainerSize();
+    this._updateContainerInverseSize();
   }
 
   isWaitingForItem() {
@@ -130,7 +144,7 @@ export class Marquee {
   // update size of container so that the marquee items fit inside it.
   // This is needed because the items are posisitioned absolutely, so not in normal flow.
   // Without this, for DIRECTION.RIGHT, the height of the container would always be 0px, which is not useful
-  _updateContainerSize() {
+  _updateContainerInverseSize() {
     if (this._direction === DIRECTION.DOWN) {
       return;
     }
@@ -146,8 +160,8 @@ export class Marquee {
       return size;
     }, 0);
 
-    if (this._containerSize !== maxSize) {
-      this._containerSize = maxSize;
+    if (this._containerInverseSize !== maxSize) {
+      this._containerInverseSize = maxSize;
       this._$container.style.height = `${maxSize}px`;
     }
   }
@@ -232,7 +246,9 @@ export class Marquee {
         offsets.push(nextOffset);
         nextOffset += this._pendingItem.getSize();
       } else {
-        if (
+        if (this._nextItemImmediatelyFollowsPrevious && !this._items.length) {
+          this._leftItemOffset = containerSize;
+        } else if (
           !this._nextItemImmediatelyFollowsPrevious &&
           this._items.length &&
           this._leftItemOffset > 0
@@ -281,7 +297,7 @@ export class Marquee {
       item.item.setOffset(offset, this._rate, windowResized || hasJumped);
       item.offset = offset;
     });
-    this._updateContainerSize();
+    this._updateContainerInverseSize();
 
     if (!this._items.length) {
       this._leftItemOffset = 0;
