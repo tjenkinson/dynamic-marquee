@@ -65,6 +65,10 @@ export class Marquee {
   }
 
   setRate(rate) {
+    if (rate === this._rate) {
+      return;
+    }
+
     if (!rate !== !this._rate) {
       this._enableAnimationHint(!!rate);
       if (rate) {
