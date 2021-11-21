@@ -227,6 +227,12 @@ export class Marquee {
       return false;
     });
 
+    const justReversedRate = this._justReversedRate;
+    this._justReversedRate = false;
+    if (justReversedRate) {
+      this._nextItemImmediatelyFollowsPrevious = false;
+    }
+
     if (this._pendingItem) {
       this._$container.appendChild(this._pendingItem.getContainer());
       if (this._rate <= 0) {
@@ -309,8 +315,6 @@ export class Marquee {
     }
 
     this._nextItemImmediatelyFollowsPrevious = false;
-    const justReversedRate = this._justReversedRate;
-    this._justReversedRate = false;
 
     if (
       !this._waitingForItem &&
