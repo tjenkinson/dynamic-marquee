@@ -134,7 +134,7 @@ export class Marquee {
     }
   }
 
-  _removeItem({ item }) {
+  _removeItem(item) {
     defer(() => {
       item.remove();
       if (item instanceof Item) {
@@ -211,7 +211,7 @@ export class Marquee {
         if (this._leftItemOffset + size > 0) {
           break;
         }
-        this._removeItem(this._items[0]);
+        this._removeItem(item);
         this._items.shift();
         this._leftItemOffset += size;
       }
@@ -222,7 +222,7 @@ export class Marquee {
     this._items.some(({ item }, i) => {
       if (nextOffset >= containerSize) {
         if (this._rate > 0) {
-          this._items.splice(i).forEach((a) => this._removeItem(a));
+          this._items.splice(i).forEach((a) => this._removeItem(a.item));
           return true;
         }
       }
