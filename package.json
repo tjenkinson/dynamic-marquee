@@ -39,7 +39,7 @@
   "devDependencies": {
     "@babel/core": "^7.8.7",
     "@babel/preset-env": "^7.8.7",
-    "@rollup/plugin-commonjs": "^16.0.0",
+    "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^10.0.0",
     "husky": "^4.2.3",
     "longest-common-substring": "0.0.1",
