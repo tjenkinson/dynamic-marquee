@@ -1,9 +1,3 @@
-import { DIRECTION } from './direction.js';
-
-export function size($el, direction) {
-  return $el[direction === DIRECTION.RIGHT ? 'offsetWidth' : 'offsetHeight'];
-}
-
 export function defer(fn) {
   window.setTimeout(() => fn(), 0);
 }
