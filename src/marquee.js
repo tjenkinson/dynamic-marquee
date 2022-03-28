@@ -19,6 +19,7 @@ export class Marquee {
     this._waitingForItem = true;
     this._nextItemImmediatelyFollowsPrevious = startOnScreen;
     this._rate = rate;
+    this._lastRate = 0;
     this._lastEffectiveRate = rate;
     this._justReversedRate = false;
     this._direction = upDown ? DIRECTION.DOWN : DIRECTION.RIGHT;
@@ -181,7 +182,6 @@ export class Marquee {
     }
 
     if (!this._renderTimer) {
-      this._lastUpdateTime = performance.now();
       // ideally we'd use requestAnimationFrame here but there's a bug in
       // chrome which means when the callback is called it triggers a style
       // recalculation even when nothing changes, which is not efficient
@@ -208,12 +208,14 @@ export class Marquee {
 
     const now = performance.now();
     const timePassed = now - this._lastUpdateTime;
+    this._lastUpdateTime = now;
     if (this._rate) {
       this._scheduleRender();
     }
 
     this._rendering = true;
-    const shiftAmount = this._rate * (timePassed / 1000);
+    const shiftAmount = this._lastRate * (timePassed / 1000);
+    this._lastRate = this._rate;
     this._containerSize =
       this._direction === DIRECTION.RIGHT
         ? this._containerSizeWatcher.getWidth()
