@@ -1,6 +1,7 @@
 import { Item, VirtualItem } from './item.js';
 import { DIRECTION } from './direction.js';
-import { size, defer, deferException, toDomEl } from './helpers.js';
+import { defer, deferException, toDomEl } from './helpers.js';
+import { SizeWatcher } from './size-watcher.js';
 
 export class Marquee {
   constructor(
@@ -20,14 +21,14 @@ export class Marquee {
     this._rate = rate;
     this._lastEffectiveRate = rate;
     this._justReversedRate = false;
-    this._windowWidth = window.innerWidth;
-    this._windowHeight = window.innerHeight;
     this._direction = upDown ? DIRECTION.DOWN : DIRECTION.RIGHT;
     this._onItemRequired = [];
     this._onItemRemoved = [];
     this._onAllItemsRemoved = [];
     this._leftItemOffset = 0;
     this._containerSize = 0;
+    this._previousContainerSize = null;
+    this._containerSizeWatcher = null;
     this._items = [];
     this._pendingItem = null;
     const $innerContainer = document.createElement('div');
@@ -41,7 +42,6 @@ export class Marquee {
     }
     this._updateContainerInverseSize();
     $container.appendChild($innerContainer);
-    this._scheduleRender();
   }
 
   // called when there's room for a new item.
@@ -72,7 +72,7 @@ export class Marquee {
     if (!rate !== !this._rate) {
       this._enableAnimationHint(!!rate);
       if (rate) {
-        this._scheduleRender();
+        this._scheduleRender(true);
       }
     }
 
@@ -130,7 +130,7 @@ export class Marquee {
     if (this._rendering) {
       this._render(0);
     } else {
-      this._scheduleRender();
+      this._scheduleRender(true);
     }
   }
 
@@ -174,19 +174,36 @@ export class Marquee {
     this._items.forEach(({ item }) => item.enableAnimationHint(enable));
   }
 
-  _scheduleRender() {
-    if (!this._requestAnimationID) {
+  _scheduleRender(immediate) {
+    if (immediate) {
+      if (this._renderTimer) window.clearTimeout(this._renderTimer);
+      this._renderTimer = null;
+    }
+
+    if (!this._renderTimer) {
       this._lastUpdateTime = performance.now();
-      this._requestAnimationID = window.requestAnimationFrame(() =>
-        this._onRequestAnimationFrame()
+      // ideally we'd use requestAnimationFrame here but there's a bug in
+      // chrome which means when the callback is called it triggers a style
+      // recalculation even when nothing changes, which is not efficient
+      // see https://bugs.chromium.org/p/chromium/issues/detail?id=1252311
+      // and https://stackoverflow.com/q/69293778/1048589
+      this._renderTimer = window.setTimeout(
+        () => this._tick(),
+        immediate ? 0 : 100
       );
     }
   }
 
-  _onRequestAnimationFrame() {
-    this._requestAnimationID = null;
+  _tick() {
+    this._renderTimer = null;
     if (!this._items.length && !this._pendingItem) {
+      this._containerSizeWatcher.tearDown();
+      this._containerSizeWatcher = null;
       return;
+    }
+
+    if (!this._containerSizeWatcher) {
+      this._containerSizeWatcher = new SizeWatcher(this._$container);
     }
 
     const now = performance.now();
@@ -194,9 +211,13 @@ export class Marquee {
     if (this._rate) {
       this._scheduleRender();
     }
+
     this._rendering = true;
     const shiftAmount = this._rate * (timePassed / 1000);
-    this._containerSize = size(this._$container, this._direction);
+    this._containerSize =
+      this._direction === DIRECTION.RIGHT
+        ? this._containerSizeWatcher.getWidth()
+        : this._containerSizeWatcher.getHeight();
     deferException(() => this._render(shiftAmount));
     this._rendering = false;
   }
@@ -294,17 +315,18 @@ export class Marquee {
       this._items.pop();
     }
 
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const windowResized =
-      windowWidth !== this._windowWidth || windowHeight !== this._windowHeight;
-    this._windowWidth = windowWidth;
-    this._windowHeight = windowHeight;
+    const containerSizeChanged =
+      this._containerSize !== this._previousContainerSize;
+    this._previousContainerSize = this._containerSize;
 
     offsets.forEach((offset, i) => {
       const item = this._items[i];
       const hasJumped = Math.abs(item.offset + shiftAmount - offset) >= 1;
-      item.item.setOffset(offset, this._rate, windowResized || hasJumped);
+      item.item.setOffset(
+        offset,
+        this._rate,
+        containerSizeChanged || hasJumped
+      );
       item.offset = offset;
     });
     this._updateContainerInverseSize();

@@ -1,5 +1,5 @@
 import { DIRECTION } from './direction.js';
-import { size } from './helpers.js';
+import { SizeWatcher } from './size-watcher.js';
 
 const transitionDuration = 60000;
 
@@ -14,6 +14,7 @@ export class Item {
       $container.style.whiteSpace = 'nowrap';
     }
     $container.style.willChange = 'auto';
+    this._sizeWatcher = new SizeWatcher($container);
     $container.appendChild($el);
 
     this._$container = $container;
@@ -26,7 +27,9 @@ export class Item {
     if (inverse) {
       dir = dir === DIRECTION.RIGHT ? DIRECTION.DOWN : DIRECTION.RIGHT;
     }
-    return size(this._$container, dir);
+    return dir === DIRECTION.RIGHT
+      ? this._sizeWatcher.getWidth()
+      : this._sizeWatcher.getHeight();
   }
   setOffset(offset, rate, force) {
     const transitionState = this._transitionState;
@@ -69,7 +72,8 @@ export class Item {
     this._$container.style.willChange = enable ? 'transform' : 'auto';
   }
   remove() {
-    this._$container.remove();
+    this._sizeWatcher.tearDown();
+    this._$container.parentNode.removeChild(this._$container);
   }
   getContainer() {
     return this._$container;
