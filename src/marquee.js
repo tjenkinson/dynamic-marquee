@@ -22,6 +22,7 @@ export class Marquee {
     this._lastRate = 0;
     this._lastEffectiveRate = rate;
     this._justReversedRate = false;
+    this._lastUpdateTime = null;
     this._direction = upDown ? DIRECTION.DOWN : DIRECTION.RIGHT;
     this._onItemRequired = [];
     this._onItemRemoved = [];
@@ -194,11 +195,17 @@ export class Marquee {
     }
   }
 
+  _cleanup() {
+    this._containerSizeWatcher.tearDown();
+    this._containerSizeWatcher = null;
+    this._lastUpdateTime = null;
+  }
+
   _tick() {
     this._renderTimer = null;
+
     if (!this._items.length && !this._pendingItem) {
-      this._containerSizeWatcher.tearDown();
-      this._containerSizeWatcher = null;
+      this._cleanup();
       return;
     }
 
@@ -207,11 +214,8 @@ export class Marquee {
     }
 
     const now = performance.now();
-    const timePassed = now - this._lastUpdateTime;
+    const timePassed = this._lastUpdateTime ? now - this._lastUpdateTime : 0;
     this._lastUpdateTime = now;
-    if (this._rate) {
-      this._scheduleRender();
-    }
 
     this._rendering = true;
     const shiftAmount = this._lastRate * (timePassed / 1000);
@@ -222,6 +226,12 @@ export class Marquee {
         : this._containerSizeWatcher.getHeight();
     deferException(() => this._render(shiftAmount));
     this._rendering = false;
+
+    if (this._rate) {
+      this._scheduleRender();
+    } else {
+      this._cleanup();
+    }
   }
 
   _render(shiftAmount) {
