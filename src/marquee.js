@@ -370,8 +370,8 @@ export class Marquee {
       this._onItemRequired.some((cb) => {
         return deferException(() => {
           nextItem = cb({
-            immediatelyFollowsPrevious: this
-              ._nextItemImmediatelyFollowsPrevious,
+            immediatelyFollowsPrevious:
+              this._nextItemImmediatelyFollowsPrevious,
           });
           return !!nextItem;
         });
