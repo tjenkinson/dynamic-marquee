@@ -9,16 +9,12 @@
     "watch": "rollup --config rollup.config.js --watch",
     "prettier": "prettier --write .",
     "lint": "prettier --check .",
-    "preversion": "npm run build"
+    "preversion": "npm run build",
+    "prepare": "husky install"
   },
   "files": [
     "dist/**/*"
   ],
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run prettier"
-    }
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tjenkinson/dynamic-marquee.git"
@@ -41,7 +37,7 @@
     "@babel/preset-env": "^7.8.7",
     "@rollup/plugin-commonjs": "^21.1.0",
     "@rollup/plugin-node-resolve": "^13.2.1",
-    "husky": "^7.0.4",
+    "husky": "^7.0.0",
     "longest-common-substring": "0.0.1",
     "prettier": "^2.0.2",
     "rollup": "^2.0.6",
