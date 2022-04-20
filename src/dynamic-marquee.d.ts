@@ -6,12 +6,12 @@ export type Options = {
   startOnScreen?: boolean;
 };
 
+export type Item = HTMLElement | string | number;
+
 export class Marquee {
   constructor($container: HTMLElement, options?: Options);
   onItemRequired(
-    callback: (data: {
-      immediatelyFollowsPrevious: boolean;
-    }) => HTMLElement | void
+    callback: (data: { immediatelyFollowsPrevious: boolean }) => Item | void
   ): void;
   onItemRemoved(callback: ($el: HTMLElement) => void): void;
   onAllItemsRemoved(callback: () => void): void;
@@ -20,10 +20,10 @@ export class Marquee {
   getRate(): number;
   clear(): void;
   isWaitingForItem(): boolean;
-  appendItem($el: HTMLElement | string | number): void;
+  appendItem($el: Item): void;
 }
 
-export type LoopBuilder = () => HTMLElement | string | number;
+export type LoopBuilder = () => Item;
 export type LoopReturn = { update: (newBuilders: LoopBuilder[]) => void };
 
 export function loop(
