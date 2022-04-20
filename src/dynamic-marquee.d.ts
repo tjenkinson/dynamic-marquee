@@ -11,9 +11,7 @@ export type Item = HTMLElement | string | number;
 export class Marquee {
   constructor($container: HTMLElement, options?: Options);
   onItemRequired(
-    callback: (data: {
-      immediatelyFollowsPrevious: boolean;
-    }) => Item | void
+    callback: (data: { immediatelyFollowsPrevious: boolean }) => Item | void
   ): void;
   onItemRemoved(callback: ($el: HTMLElement) => void): void;
   onAllItemsRemoved(callback: () => void): void;
