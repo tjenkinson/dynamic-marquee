@@ -21,3 +21,11 @@ export function toDomEl($el) {
   }
   return $el;
 }
+
+export function last(input) {
+  return input.length ? input[input.length - 1] : null;
+}
+
+export function first(input) {
+  return input.length ? input[0] : null;
+}

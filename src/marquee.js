@@ -1,7 +1,12 @@
-import { Item, VirtualItem } from './item.js';
+import { Boundary } from '@tjenkinson/boundary';
+import { Item } from './item.js';
+import { Slider } from './slider.js';
 import { DIRECTION } from './direction.js';
-import { defer, deferException, toDomEl } from './helpers.js';
+import { defer, deferException, toDomEl, first, last } from './helpers.js';
 import { SizeWatcher } from './size-watcher.js';
+
+const maxTranslateDistance = 500000;
+const renderInterval = 100;
 
 export class Marquee {
   constructor(
@@ -15,35 +20,53 @@ export class Marquee {
       startOnScreen = false,
     } = {}
   ) {
-    this._rendering = false;
+    this._boundary = new Boundary({
+      onEnter: () => ({
+        allItemsRemoved: false,
+        callbacks: [],
+      }),
+      onExit: ({ onEnterResult: { callbacks, allItemsRemoved } }) => {
+        if (allItemsRemoved) {
+          this._onAllItemsRemoved.forEach((cb) => callbacks.push(cb));
+        }
+
+        callbacks.forEach((cb) => defer(() => cb()));
+      },
+    });
+
     this._waitingForItem = true;
-    this._nextItemImmediatelyFollowsPrevious = startOnScreen;
+    this._nextItemWouldBeTouching = startOnScreen;
     this._rate = rate;
-    this._lastRate = 0;
     this._lastEffectiveRate = rate;
     this._justReversedRate = false;
-    this._lastUpdateTime = null;
+    this._correlation = null;
     this._direction = upDown ? DIRECTION.DOWN : DIRECTION.RIGHT;
     this._onItemRequired = [];
     this._onItemRemoved = [];
     this._onAllItemsRemoved = [];
-    this._leftItemOffset = 0;
+    this._windowOffset = 0;
     this._containerSize = 0;
-    this._previousContainerSize = null;
     this._containerSizeWatcher = null;
     this._items = [];
     this._pendingItem = null;
-    const $innerContainer = document.createElement('div');
-    $innerContainer.style.position = 'relative';
-    $innerContainer.style.display = 'inline-block';
-    this._$container = $innerContainer;
-    this._containerInverseSize = null;
-    $innerContainer.style.width = '100%';
+    const $window = document.createElement('div');
+    $window.style.display = 'block';
+    $window.style.overflow = 'hidden';
     if (this._direction === DIRECTION.DOWN) {
-      $innerContainer.style.height = '100%';
+      $window.style.height = '100%';
     }
-    this._updateContainerInverseSize();
-    $container.appendChild($innerContainer);
+    this._$window = $window;
+    this.windowInverseSize = null;
+    this._updateWindowInverseSize();
+    const $moving = document.createElement('div');
+    this._$moving = $moving;
+    $moving.style.display = 'block';
+    $moving.style.position = 'absolute';
+    $moving.style.left = '0';
+    $moving.style.right = '0';
+    this._slider = new Slider($moving, this._direction);
+    $window.appendChild($moving);
+    $container.appendChild($window);
   }
 
   // called when there's room for a new item.
@@ -63,7 +86,7 @@ export class Marquee {
   }
 
   getNumItems() {
-    return this._items.filter(({ item }) => item instanceof Item).length;
+    return this._items.length;
   }
 
   setRate(rate) {
@@ -71,32 +94,21 @@ export class Marquee {
       return;
     }
 
-    if (!rate !== !this._rate) {
-      this._enableAnimationHint(!!rate);
-      if (rate) {
-        this._scheduleRender(true);
-      }
-    }
-
     if (rate * this._lastEffectiveRate < 0) {
       this._justReversedRate = !this._justReversedRate;
-
-      if (rate <= 0) {
-        const containerSize = this._containerSize;
-        let nextOffset = this._leftItemOffset;
-        this._items.forEach(({ item }) => {
-          nextOffset += item.getSize();
-        });
-        this._waitingForItem = nextOffset <= containerSize;
-      } else {
-        this._waitingForItem = this._leftItemOffset >= 0;
-      }
     }
 
     this._rate = rate;
     if (rate) {
       this._lastEffectiveRate = rate;
+      if (!this._items.length) {
+        this._waitingForItem = true;
+      }
+    } else {
+      this._waitingForItem = false;
     }
+
+    this._tick();
   }
 
   getRate() {
@@ -104,283 +116,259 @@ export class Marquee {
   }
 
   clear() {
-    this._items.forEach(({ item }) => this._removeItem(item));
-    this._items = [];
-    this._waitingForItem = true;
-    this._updateContainerInverseSize();
+    this._boundary.enter(() => {
+      this._items.forEach(({ item }) => this._removeItem(item));
+      this._items = [];
+      this._waitingForItem = true;
+      this._nextItemWouldBeTouching = false;
+      this._updateWindowInverseSize();
+      this._cleanup();
+    });
   }
 
   isWaitingForItem() {
     return this._waitingForItem;
   }
 
-  appendItem($el) {
-    if (!this._waitingForItem) {
-      throw new Error('No room for item.');
-    }
-    // convert to div if $el is a string
-    $el = toDomEl($el);
-    const itemAlreadyExists = this._items.some(({ item }) => {
-      return item instanceof Item && item.getOriginalEl() === $el;
+  appendItem($el, { metadata = null } = {}) {
+    this._boundary.enter(() => {
+      if (!this._waitingForItem) {
+        throw new Error('No room for item.');
+      }
+      // convert to div if $el is a string
+      $el = toDomEl($el);
+      const itemAlreadyExists = this._items.some(({ item }) => {
+        return item.getOriginalEl() === $el;
+      });
+      if (itemAlreadyExists) {
+        throw new Error('Item already exists.');
+      }
+      this._waitingForItem = false;
+      this._pendingItem = new Item($el, this._direction, metadata);
+      this._tick();
     });
-    if (itemAlreadyExists) {
-      throw new Error('Item already exists.');
-    }
-    this._waitingForItem = false;
-    this._pendingItem = new Item($el, this._direction);
-    this._pendingItem.enableAnimationHint(!!this._rate);
-    if (this._rendering) {
-      this._render(0);
-    } else {
-      this._scheduleRender(true);
-    }
   }
 
   _removeItem(item) {
-    defer(() => {
+    this._boundary.enter(({ callbacks }) => {
       item.remove();
-      if (item instanceof Item) {
-        this._onItemRemoved.forEach((cb) => {
-          deferException(() => cb(item.getOriginalEl()));
-        });
-      }
+      this._items.splice(this._items.indexOf(item), 1);
+      this._onItemRemoved.forEach((cb) => {
+        callbacks.push(() => cb(item.getOriginalEl()));
+      });
     });
   }
 
   // update size of container so that the marquee items fit inside it.
   // This is needed because the items are posisitioned absolutely, so not in normal flow.
   // Without this, for DIRECTION.RIGHT, the height of the container would always be 0px, which is not useful
-  _updateContainerInverseSize() {
+  _updateWindowInverseSize() {
     if (this._direction === DIRECTION.DOWN) {
       return;
     }
 
-    const maxSize = this._items.reduce((size, { item }) => {
-      if (item instanceof VirtualItem) {
-        return size;
-      }
-      const a = item.getSize({ inverse: true });
-      if (a > size) {
-        return a;
-      }
-      return size;
-    }, 0);
+    const maxSize = Math.max(
+      ...this._items.map(({ item }) => item.getSize({ inverse: true }))
+    );
 
-    if (this._containerInverseSize !== maxSize) {
-      this._containerInverseSize = maxSize;
-      this._$container.style.height = `${maxSize}px`;
+    if (this.windowInverseSize !== maxSize) {
+      this.windowInverseSize = maxSize;
+      this._$window.style.height = `${maxSize}px`;
     }
   }
 
-  _enableAnimationHint(enable) {
-    this._items.forEach(({ item }) => item.enableAnimationHint(enable));
-  }
-
-  _scheduleRender(immediate) {
-    if (immediate) {
-      if (this._renderTimer) window.clearTimeout(this._renderTimer);
-      this._renderTimer = null;
-    }
-
+  _scheduleRender() {
     if (!this._renderTimer) {
       // ideally we'd use requestAnimationFrame here but there's a bug in
       // chrome which means when the callback is called it triggers a style
       // recalculation even when nothing changes, which is not efficient
       // see https://bugs.chromium.org/p/chromium/issues/detail?id=1252311
       // and https://stackoverflow.com/q/69293778/1048589
-      this._renderTimer = window.setTimeout(
-        () => this._tick(),
-        immediate ? 0 : 100
-      );
+      this._renderTimer = window.setTimeout(() => this._tick(), renderInterval);
     }
   }
 
   _cleanup() {
-    this._containerSizeWatcher.tearDown();
+    this._containerSizeWatcher?.tearDown();
     this._containerSizeWatcher = null;
-    this._lastUpdateTime = null;
+    this._correlation = null;
+    this._windowOffset = 0;
   }
 
   _tick() {
-    this._renderTimer = null;
+    this._boundary.enter(({ callbacks }) => {
+      this._renderTimer && clearTimeout(this._renderTimer);
+      this._renderTimer = null;
 
-    if (!this._items.length && !this._pendingItem) {
-      this._cleanup();
-      return;
-    }
+      if (!this._items.length && !this._pendingItem) {
+        this._cleanup();
+        return;
+      }
 
-    if (!this._containerSizeWatcher) {
-      this._containerSizeWatcher = new SizeWatcher(this._$container);
-    }
-
-    const now = performance.now();
-    const timePassed = this._lastUpdateTime ? now - this._lastUpdateTime : 0;
-    this._lastUpdateTime = now;
-
-    this._rendering = true;
-    const shiftAmount = this._lastRate * (timePassed / 1000);
-    this._lastRate = this._rate;
-    this._containerSize =
-      this._direction === DIRECTION.RIGHT
-        ? this._containerSizeWatcher.getWidth()
-        : this._containerSizeWatcher.getHeight();
-    deferException(() => this._render(shiftAmount));
-    this._rendering = false;
-
-    if (this._rate) {
       this._scheduleRender();
-    } else {
-      this._cleanup();
-    }
-  }
 
-  _render(shiftAmount) {
-    this._leftItemOffset += shiftAmount;
-    const containerSize = this._containerSize;
-    if (this._rate < 0) {
-      while (this._items.length) {
-        const { item } = this._items[0];
-        const size = item.getSize();
-        if (this._leftItemOffset + size > 0) {
-          break;
-        }
-        this._removeItem(item);
-        this._items.shift();
-        this._leftItemOffset += size;
+      if (!this._containerSizeWatcher) {
+        this._containerSizeWatcher = new SizeWatcher(this._$window);
       }
-    }
 
-    const offsets = [];
-    let nextOffset = this._leftItemOffset;
-    this._items.some(({ item }, i) => {
-      if (nextOffset >= containerSize) {
-        if (this._rate > 0) {
-          this._items.splice(i).forEach((a) => this._removeItem(a.item));
-          return true;
-        }
-      }
-      offsets.push(nextOffset);
-      nextOffset += item.getSize();
-      return false;
-    });
+      const now = performance.now();
+      let resynced = false;
 
-    const justReversedRate = this._justReversedRate;
-    this._justReversedRate = false;
-    if (justReversedRate) {
-      this._nextItemImmediatelyFollowsPrevious = false;
-    }
-
-    if (this._pendingItem) {
-      this._$container.appendChild(this._pendingItem.getContainer());
-      if (this._rate <= 0) {
-        if (!this._nextItemImmediatelyFollowsPrevious) {
-          // insert virtual item so that it starts off screen
-          this._items.push({
-            item: new VirtualItem(Math.max(0, containerSize - nextOffset)),
-            offset: nextOffset,
-          });
-          offsets.push(nextOffset);
-          nextOffset = containerSize;
-        }
-        this._items.push({
-          item: this._pendingItem,
-          offset: nextOffset,
-        });
-        offsets.push(nextOffset);
-        nextOffset += this._pendingItem.getSize();
+      if (this._correlation) {
+        const timePassed = now - this._correlation.time;
+        this._windowOffset =
+          this._correlation.offset +
+          this._correlation.rate * -1 * (timePassed / 1000);
       } else {
-        if (this._nextItemImmediatelyFollowsPrevious && !this._items.length) {
-          this._leftItemOffset = containerSize;
-        } else if (
-          !this._nextItemImmediatelyFollowsPrevious &&
-          this._items.length &&
-          this._leftItemOffset > 0
-        ) {
-          this._items.unshift({
-            item: new VirtualItem(this._leftItemOffset),
-            offset: 0,
-          });
-          offsets.unshift(0);
-          this._leftItemOffset = 0;
+        resynced = true;
+      }
+
+      if (Math.abs(this._windowOffset) > maxTranslateDistance) {
+        // resync so that the number of pixels we are translating doesn't get too big
+        resynced = true;
+        const shiftAmount = this._windowOffset;
+        this._items.forEach((item) => (item.offset -= shiftAmount));
+        this._correlation = null;
+        this._windowOffset = 0;
+      }
+
+      this._slider.setOffset(this._windowOffset * -1, this._rate, resynced);
+
+      if (!this._correlation || this._correlation.rate !== this._rate) {
+        this._correlation = {
+          time: now,
+          offset: this._windowOffset,
+          rate: this._rate,
+        };
+      }
+
+      this._containerSize =
+        this._direction === DIRECTION.RIGHT
+          ? this._containerSizeWatcher.getWidth()
+          : this._containerSizeWatcher.getHeight();
+
+      // if container has size 0 pretend it is 1 to prevent infinite loop
+      // of adding items that are instantly removed
+      const containerSize = Math.max(this._containerSize, 1);
+      const justReversedRate = this._justReversedRate;
+      this._justReversedRate = false;
+      const newItemWouldBeTouching = this._nextItemWouldBeTouching;
+      this._nextItemWouldBeTouching = null;
+      let nextItemTouching = null;
+
+      if (this._pendingItem) {
+        this._$moving.appendChild(this._pendingItem.getContainer());
+        const touching =
+          this._rate <= 0 ? last(this._items) : first(this._items);
+        if (this._rate <= 0) {
+          this._items = [
+            ...this._items,
+            {
+              item: this._pendingItem,
+              appendRate: this._rate,
+              offset: newItemWouldBeTouching
+                ? touching
+                  ? touching.offset + touching.item.getSize()
+                  : this._windowOffset
+                : this._windowOffset + containerSize,
+            },
+          ];
+        } else {
+          this._items = [
+            {
+              item: this._pendingItem,
+              appendRate: this._rate,
+              offset: newItemWouldBeTouching
+                ? touching
+                  ? touching.offset - this._pendingItem.getSize()
+                  : this._windowOffset +
+                    containerSize -
+                    this._pendingItem.getSize()
+                : this._windowOffset - this._pendingItem.getSize(),
+            },
+            ...this._items,
+          ];
         }
-        this._leftItemOffset -= this._pendingItem.getSize();
-        offsets.unshift(this._leftItemOffset);
-        this._items.unshift({
-          item: this._pendingItem,
-          offset: this._leftItemOffset,
-        });
+        this._pendingItem = null;
       }
-      this._pendingItem = null;
-    }
 
-    // trim virtual items
-    while (this._items.length && this._items[0].item instanceof VirtualItem) {
-      offsets.shift();
-      this._items.shift();
-      this._leftItemOffset = offsets[0] || 0;
-    }
-    while (
-      this._items.length &&
-      this._items[this._items.length - 1].item instanceof VirtualItem
-    ) {
-      offsets.pop();
-      this._items.pop();
-    }
+      // add a buffer on the side to make sure that new elements are added before they would actually be on screen
+      const buffer = (renderInterval / 1000) * Math.abs(this._rate);
+      let requireNewItem = false;
+      if (
+        !this._waitingForItem &&
+        this._items.length /* there should always be items at this point */
+      ) {
+        const firstItem = first(this._items);
+        const lastItem = last(this._items);
+        const touching = this._rate <= 0 ? lastItem : firstItem;
+        if (
+          (this._rate <= 0 &&
+            lastItem.offset + touching.item.getSize() - this._windowOffset <=
+              containerSize + buffer) ||
+          (this._rate > 0 && touching.offset - this._windowOffset > -1 * buffer)
+        ) {
+          this._waitingForItem = requireNewItem = true;
+          // if an item is appended immediately below, it would be considered touching
+          // the previous if we haven't just changed direction.
+          // This is useful when deciding whether to add a separator on the side that enters the
+          // screen first or not
+          nextItemTouching = justReversedRate
+            ? null
+            : {
+                $el: touching.item.getOriginalEl(),
+                metadata: touching.item.getMetadata(),
+              };
+        }
+      }
 
-    const containerSizeChanged =
-      this._containerSize !== this._previousContainerSize;
-    this._previousContainerSize = this._containerSize;
+      if (nextItemTouching) {
+        this._nextItemWouldBeTouching = true;
+      }
 
-    offsets.forEach((offset, i) => {
-      const item = this._items[i];
-      const hasJumped = Math.abs(item.offset + shiftAmount - offset) >= 1;
-      item.item.setOffset(
-        offset,
-        this._rate,
-        containerSizeChanged || hasJumped
-      );
-      item.offset = offset;
-    });
-    this._updateContainerInverseSize();
-
-    if (!this._items.length) {
-      this._leftItemOffset = 0;
-      defer(() => {
-        this._onAllItemsRemoved.forEach((cb) => {
-          deferException(() => cb());
-        });
+      this._items = [...this._items].filter(({ item, offset }) => {
+        const keep =
+          this._rate < 0
+            ? offset + item.getSize() > this._windowOffset
+            : offset < this._windowOffset + containerSize;
+        if (!keep) this._removeItem(item);
+        return keep;
       });
-    }
 
-    this._nextItemImmediatelyFollowsPrevious = false;
+      if (!this._items.length) {
+        this._onAllItemsRemoved.forEach((cb) => callbacks.push(cb));
+      }
 
-    if (
-      !this._waitingForItem &&
-      ((this._rate <= 0 && nextOffset <= containerSize) ||
-        (this._rate > 0 && this._leftItemOffset >= 0))
-    ) {
-      this._waitingForItem = true;
-      // if an item is appended immediately below, it would be considered immediately following
-      // the previous if we haven't just changed direction.
-      // This is useful when deciding whether to add a separator on the side that enters the
-      // screen first or not
-      this._nextItemImmediatelyFollowsPrevious = !justReversedRate;
+      this._items.reduce((newOffset, item) => {
+        if (newOffset !== null && item.offset < newOffset) {
+          // the size of the item before has increased and would now be overlapping
+          // this one, so shuffle this one along
+          item.offset = newOffset;
+        }
+        item.item.setOffset(item.offset);
+        return item.offset + item.item.getSize();
+      }, null);
 
-      let nextItem;
-      this._onItemRequired.some((cb) => {
-        return deferException(() => {
-          nextItem = cb({
-            immediatelyFollowsPrevious:
-              this._nextItemImmediatelyFollowsPrevious,
+      this._updateWindowInverseSize();
+
+      if (requireNewItem) {
+        let nextItem;
+        this._onItemRequired.some((cb) => {
+          return deferException(() => {
+            nextItem = cb({
+              /** @deprecated */
+              immediatelyFollowsPrevious: !!nextItemTouching,
+              touching: nextItemTouching,
+            });
+            return !!nextItem;
           });
-          return !!nextItem;
         });
-      });
-      if (nextItem) {
-        // Note appendItem() will call _render() synchronously again
-        this.appendItem(nextItem);
+        if (nextItem) {
+          // Note appendItem() will call _tick() synchronously again
+          this.appendItem(nextItem);
+        }
+        this._nextItemWouldBeTouching = false;
       }
-      this._nextItemImmediatelyFollowsPrevious = false;
-    }
+    });
   }
 }

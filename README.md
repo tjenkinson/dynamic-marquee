@@ -37,6 +37,7 @@ or
   type="text/javascript"
   src="https://cdn.jsdelivr.net/npm/dynamic-marquee@2"
 ></script>
+
 <script type="text/javascript">
   const Marquee = dynamicMarquee.Marquee;
 </script>
@@ -84,16 +85,20 @@ if (marquee.isWaitingForItem()) {
 }
 ```
 
+`appendItem` also takes an optional second param `config` object, which should contain a `metadata` property. The value of this will be provided back to you in `onItemRequired`.
+
 You can be notified when an item is required with
 
 ```js
-marquee.onItemRequired(({ immediatelyFollowsPrevious }) => {
-  // for convenience if you have an item ready to go you can just return it
+marquee.onItemRequired(({ touching }) => {
+  // For convenience if you have an item ready to go you can just return it
   // in place of `marquee.appendItem($item);`
 
-  // if `immediatelyFollowsPrevious` is `true`, this would be a good time to add
-  // a seperator on the side that is entering the screen first. See loop.js
-  // for an example.
+  // If the new item would be touching another then `touching`
+  // will be set to an object that contains `$el` and `metadata` of
+  // the item it will be touching.
+  // This can be used to determine if a separate should be added.
+  // See loop.js for an example.
   return $item;
 });
 ```
@@ -119,6 +124,8 @@ To remove all items call
 ```js
 marquee.clear();
 ```
+
+You should also call this before removing the marquee from the DOM if you no longer need it to ensure that all timers are cleaned up and garbage collection can occur.
 
 ## When has an item been removed?
 
