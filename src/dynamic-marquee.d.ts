@@ -23,7 +23,7 @@ export class Marquee<TMetadata = null> {
     callback: (data: {
       /** @deprecated use `touching !== null` instead */
       immediatelyFollowsPrevious: boolean;
-      touching: Touching<TMetadata>;
+      touching: Touching<TMetadata> | null;
     }) => Item | void
   ): void;
   onItemRemoved(callback: ($el: HTMLElement) => void): void;
