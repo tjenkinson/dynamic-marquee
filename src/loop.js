@@ -10,33 +10,30 @@ export function loop(marquee, buildersIn = [], seperatorBuilder = null) {
     return { builder: builders[nextIndex], index: nextIndex };
   };
 
-  const appendItem = (immediatelyFollowsPrevious) => {
+  const appendItem = (touching) => {
     if (!builders.length || !marquee.isWaitingForItem()) {
       return;
     }
+
+    if (
+      seperatorBuilder &&
+      touching &&
+      touching.metadata?.isSeperator !== true
+    ) {
+      const $el = toDomEl(seperatorBuilder());
+      marquee.appendItem($el, { metadata: { isSeperator: true } });
+      return;
+    }
+
     const { builder, index } = getNextBuilder();
     lastIndex = index;
-    let $item = toDomEl(builder());
-    if (immediatelyFollowsPrevious && seperatorBuilder) {
-      const $seperator = toDomEl(seperatorBuilder());
-      const $container = document.createElement('div');
-      $seperator.style.display = 'inline';
-      $item.style.display = 'inline';
-      if (marquee.getRate() <= 0) {
-        $container.appendChild($seperator);
-        $container.appendChild($item);
-      } else {
-        $container.appendChild($item);
-        $container.appendChild($seperator);
-      }
-      $item = $container;
-    }
-    marquee.appendItem($item);
+    marquee.appendItem(toDomEl(builder()));
   };
-  marquee.onItemRequired(({ immediatelyFollowsPrevious }) =>
-    appendItem(immediatelyFollowsPrevious)
-  );
+
+  marquee.onItemRequired(({ touching }) => appendItem(touching));
+
   appendItem();
+
   return {
     update: (newBuilders) => {
       // try and start from somewhere that makes sense

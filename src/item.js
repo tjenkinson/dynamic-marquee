@@ -1,26 +1,25 @@
 import { DIRECTION } from './direction.js';
 import { SizeWatcher } from './size-watcher.js';
 
-const transitionDuration = 60000;
-
 export class Item {
-  constructor($el, direction) {
+  constructor($el, direction, metadata) {
     const $container = document.createElement('div');
     $container.style.display = 'block';
+    $container.style.opacity = '0';
     $container.style.position = 'absolute';
     $container.style.margin = '0';
     $container.style.padding = '0';
     if (direction === DIRECTION.RIGHT) {
       $container.style.whiteSpace = 'nowrap';
     }
-    $container.style.willChange = 'auto';
     this._sizeWatcher = new SizeWatcher($container);
     $container.appendChild($el);
 
     this._$container = $container;
     this._$el = $el;
     this._direction = direction;
-    this._transitionState = null;
+    this._metadata = metadata;
+    this._offset = null;
   }
   getSize({ inverse = false } = {}) {
     let dir = this._direction;
@@ -31,45 +30,16 @@ export class Item {
       ? this._sizeWatcher.getWidth()
       : this._sizeWatcher.getHeight();
   }
-  setOffset(offset, rate, force) {
-    const transitionState = this._transitionState;
-    const rateChanged = !transitionState || transitionState.rate !== rate;
-    if (transitionState && !force) {
-      const timePassed = performance.now() - transitionState.time;
-      if (timePassed < transitionDuration - 10000 && !rateChanged) {
-        return;
-      }
-    }
+  setOffset(offset) {
+    if (this._offset === offset) return;
 
-    if (force || rateChanged) {
-      if (this._direction === DIRECTION.RIGHT) {
-        this._$container.style.transform = `translateX(${offset}px)`;
-      } else {
-        this._$container.style.transform = `translateY(${offset}px)`;
-      }
-
-      this._$container.style.transition = '';
-      this._$container.offsetLeft;
-    }
-
-    const futureOffset = offset + (rate / 1000) * transitionDuration;
+    this._offset = offset;
+    this._$container.style.opacity = '1';
     if (this._direction === DIRECTION.RIGHT) {
-      this._$container.style.transform = `translateX(${futureOffset}px)`;
+      this._$container.style.left = `${offset}px`;
     } else {
-      this._$container.style.transform = `translateY(${futureOffset}px)`;
+      this._$container.style.top = `${offset}px`;
     }
-
-    if (rate) {
-      this._$container.style.transition = `transform ${transitionDuration}ms linear`;
-    }
-
-    this._transitionState = {
-      time: performance.now(),
-      rate,
-    };
-  }
-  enableAnimationHint(enable) {
-    this._$container.style.willChange = enable ? 'transform' : 'auto';
   }
   remove() {
     this._sizeWatcher.tearDown();
@@ -81,19 +51,7 @@ export class Item {
   getOriginalEl() {
     return this._$el;
   }
-}
-
-export class VirtualItem {
-  constructor(size) {
-    this._size = size;
+  getMetadata() {
+    return this._metadata;
   }
-  getSize({ inverse = false } = {}) {
-    if (inverse) {
-      throw new Error('Inverse not supported on virtual item.');
-    }
-    return this._size;
-  }
-  setOffset() {}
-  enableAnimationHint() {}
-  remove() {}
 }

@@ -8,10 +8,23 @@ export type Options = {
 
 export type Item = HTMLElement | string | number;
 
-export class Marquee {
+export type AppendItemConfig<TMetadata> = {
+  metadata?: TMetadata;
+};
+
+export type Touching<TMetadata> = {
+  $el: HTMLElement;
+  metadata: TMetadata;
+};
+
+export class Marquee<TMetadata = null> {
   constructor($container: HTMLElement, options?: Options);
   onItemRequired(
-    callback: (data: { immediatelyFollowsPrevious: boolean }) => Item | void
+    callback: (data: {
+      /** @deprecated use `touching !== null` instead */
+      immediatelyFollowsPrevious: boolean;
+      touching: Touching<TMetadata>;
+    }) => Item | void
   ): void;
   onItemRemoved(callback: ($el: HTMLElement) => void): void;
   onAllItemsRemoved(callback: () => void): void;
@@ -20,7 +33,7 @@ export class Marquee {
   getRate(): number;
   clear(): void;
   isWaitingForItem(): boolean;
-  appendItem($el: Item): void;
+  appendItem($el: Item, config?: AppendItemConfig<TMetadata>): void;
 }
 
 export type LoopBuilder = () => Item;
