@@ -22,14 +22,9 @@ export class Marquee {
   ) {
     this._boundary = new Boundary({
       onEnter: () => ({
-        allItemsRemoved: false,
         callbacks: [],
       }),
-      onExit: ({ onEnterResult: { callbacks, allItemsRemoved } }) => {
-        if (allItemsRemoved) {
-          this._onAllItemsRemoved.forEach((cb) => callbacks.push(cb));
-        }
-
+      onExit: ({ onEnterResult: { callbacks } }) => {
         callbacks.forEach((cb) => defer(() => cb()));
       },
     });
