@@ -202,6 +202,12 @@ export class Marquee {
 
       this._scheduleRender();
 
+      if (!this._$window.isConnected) {
+        // pause if we've been removed from the dom
+        this._correlation = null;
+        return;
+      }
+
       if (!this._containerSizeWatcher) {
         this._containerSizeWatcher = new SizeWatcher(this._$window);
       }
