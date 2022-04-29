@@ -48,6 +48,7 @@ export class Marquee {
     const $window = document.createElement('div');
     $window.style.display = 'block';
     $window.style.overflow = 'hidden';
+    $window.style.position = 'relative';
     if (this._direction === DIRECTION.DOWN) {
       $window.style.height = '100%';
     }
