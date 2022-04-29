@@ -44,6 +44,7 @@ export class Marquee {
     this._containerSizeWatcher = null;
     this._items = [];
     this._pendingItem = null;
+    this._visible = !!document.hidden;
     const $window = document.createElement('div');
     $window.style.display = 'block';
     $window.style.overflow = 'hidden';
@@ -233,7 +234,15 @@ export class Marquee {
         this._windowOffset = 0;
       }
 
-      this._slider.setOffset(this._windowOffset * -1, this._rate, resynced);
+      const visible = !document.hidden;
+      const goneVisible = visible && this._visible !== visible;
+      this._visible = visible;
+
+      this._slider.setOffset(
+        this._windowOffset * -1,
+        this._rate,
+        resynced || goneVisible
+      );
 
       if (!this._correlation || this._correlation.rate !== this._rate) {
         this._correlation = {
