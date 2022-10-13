@@ -11,6 +11,9 @@ export class Item {
     $container.style.padding = '0';
     if (direction === DIRECTION.RIGHT) {
       $container.style.whiteSpace = 'nowrap';
+    } else {
+      $container.style.left = '0';
+      $container.style.right = '0';
     }
     this._sizeWatcher = new SizeWatcher($container);
     $container.appendChild($el);
