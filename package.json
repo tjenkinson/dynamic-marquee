@@ -38,7 +38,7 @@
     "@rollup/plugin-commonjs": "^21.1.0",
     "@rollup/plugin-node-resolve": "^13.2.1",
     "@tjenkinson/boundary": "^2.0.0",
-    "husky": "^7.0.0",
+    "husky": "^8.0.1",
     "longest-common-substring": "0.0.1",
     "prettier": "^2.0.2",
     "rollup": "^2.0.6",
