@@ -105,7 +105,7 @@ export class Marquee {
       this._waitingForItem = false;
     }
 
-    this._tick();
+    this._tick(this._waitingForItem);
   }
 
   getRate() {
@@ -192,12 +192,12 @@ export class Marquee {
     this._windowOffset = 0;
   }
 
-  _tick() {
+  _tick(force = false) {
     this._boundary.enter(({ callbacks }) => {
       this._renderTimer && clearTimeout(this._renderTimer);
       this._renderTimer = null;
 
-      if (!this._items.length && !this._pendingItem) {
+      if (!force && !this._items.length && !this._pendingItem) {
         this._cleanup();
         return;
       }
@@ -305,7 +305,7 @@ export class Marquee {
 
       // add a buffer on the side to make sure that new elements are added before they would actually be on screen
       const buffer = (renderInterval / 1000) * Math.abs(this._rate);
-      let requireNewItem = false;
+      let requireNewItem = this._waitingForItem;
       if (
         !this._waitingForItem &&
         this._items.length /* there should always be items at this point */
