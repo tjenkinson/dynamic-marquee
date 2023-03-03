@@ -284,7 +284,9 @@ export class Marquee {
 
       // calculate what the new offsets should be given item sizes may have changed
       this._items.reduce((newOffset, item) => {
-        if (newOffset !== null) {
+        if (newOffset !== null && item.offset < newOffset) {
+          // the size of the item before has increased and would now be overlapping
+          // this one, so shuffle this one along.
           item.offset = newOffset;
         }
         item.item.setOffset(item.offset);
