@@ -366,9 +366,7 @@ export class Marquee {
       }
 
       this._items.reduce((newOffset, item) => {
-        if (newOffset !== null && item.offset < newOffset) {
-          // the size of the item before has increased and would now be overlapping
-          // this one, so shuffle this one along
+        if (newOffset !== null) {
           item.offset = newOffset;
         }
         item.item.setOffset(item.offset);
