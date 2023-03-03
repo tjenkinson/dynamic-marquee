@@ -1,6 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import babel from 'rollup-plugin-babel';
+import babel from '@rollup/plugin-babel';
 import { copyFileSync } from 'fs';
 
 export default {
@@ -8,7 +8,7 @@ export default {
   plugins: [
     resolve({ browser: true }),
     commonjs(),
-    babel({ exclude: 'node_modules/**' }),
+    babel({ exclude: 'node_modules/**', babelHelpers: 'bundled' }),
     {
       writeBundle() {
         copyFileSync('src/dynamic-marquee.d.ts', 'dist/dynamic-marquee.d.ts');
