@@ -339,9 +339,10 @@ export class Marquee {
         const touching = this._rate <= 0 ? lastItem : firstItem;
         if (
           (this._rate <= 0 &&
-            lastItem.offset + touching.item.getSize() - this._windowOffset <=
+            lastItem.offset + lastItem.item.getSize() - this._windowOffset <=
               containerSize + buffer) ||
-          (this._rate > 0 && touching.offset - this._windowOffset > -1 * buffer)
+          (this._rate > 0 &&
+            firstItem.offset - this._windowOffset > -1 * buffer)
         ) {
           this._waitingForItem = requireNewItem = true;
           // if an item is appended immediately below, it would be considered touching
