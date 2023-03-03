@@ -8,7 +8,7 @@ function pxStringToValue(input) {
 }
 
 export class SizeWatcher {
-  constructor($el) {
+  constructor($el, onChange) {
     this._$el = $el;
     this._width = null;
     this._height = null;
@@ -19,6 +19,7 @@ export class SizeWatcher {
             const size = entry.borderBoxSize[0] || entry.borderBoxSize;
             this._width = size.inlineSize;
             this._height = size.blockSize;
+            onChange();
           })
         : null;
 

@@ -45,6 +45,7 @@ export class Marquee {
     this._items = [];
     this._pendingItem = null;
     this._visible = !!document.hidden;
+    this._waitingForRaf = false;
     const $window = document.createElement('div');
     $window.style.display = 'block';
     $window.style.overflow = 'hidden';
@@ -141,7 +142,9 @@ export class Marquee {
         throw new Error('Item already exists.');
       }
       this._waitingForItem = false;
-      this._pendingItem = new Item($el, this._direction, metadata);
+      this._pendingItem = new Item($el, this._direction, metadata, () =>
+        this._tickOnRaf()
+      );
       this._tick();
     });
   }
@@ -192,6 +195,16 @@ export class Marquee {
     this._windowOffset = 0;
   }
 
+  _tickOnRaf() {
+    if (!window.requestAnimationFrame || this._waitingForRaf) return;
+
+    this._waitingForRaf = true;
+    window.requestAnimationFrame(() => {
+      this._waitingForRaf = false;
+      this._tick();
+    });
+  }
+
   _tick(force = false) {
     this._boundary.enter(({ callbacks }) => {
       this._renderTimer && clearTimeout(this._renderTimer);
@@ -211,7 +224,9 @@ export class Marquee {
       }
 
       if (!this._containerSizeWatcher) {
-        this._containerSizeWatcher = new SizeWatcher(this._$window);
+        this._containerSizeWatcher = new SizeWatcher(this._$window, () =>
+          this._tickOnRaf()
+        );
       }
 
       const now = performance.now();

@@ -2,7 +2,7 @@ import { DIRECTION } from './direction.js';
 import { SizeWatcher } from './size-watcher.js';
 
 export class Item {
-  constructor($el, direction, metadata) {
+  constructor($el, direction, metadata, onSizeChange) {
     const $container = document.createElement('div');
     $container.style.display = 'block';
     $container.style.opacity = '0';
@@ -15,7 +15,7 @@ export class Item {
       $container.style.left = '0';
       $container.style.right = '0';
     }
-    this._sizeWatcher = new SizeWatcher($container);
+    this._sizeWatcher = new SizeWatcher($container, onSizeChange);
     $container.appendChild($el);
 
     this._$container = $container;
