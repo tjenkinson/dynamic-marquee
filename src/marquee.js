@@ -282,6 +282,15 @@ export class Marquee {
       this._nextItemWouldBeTouching = null;
       let nextItemTouching = null;
 
+      // calculate what the new offsets should be given item sizes may have changed
+      this._items.reduce((newOffset, item) => {
+        if (newOffset !== null) {
+          item.offset = newOffset;
+        }
+        item.item.setOffset(item.offset);
+        return item.offset + item.item.getSize();
+      }, null);
+
       if (this._pendingItem) {
         this._$moving.appendChild(this._pendingItem.getContainer());
         const touching =
@@ -364,14 +373,6 @@ export class Marquee {
       if (!this._items.length) {
         this._onAllItemsRemoved.forEach((cb) => callbacks.push(cb));
       }
-
-      this._items.reduce((newOffset, item) => {
-        if (newOffset !== null) {
-          item.offset = newOffset;
-        }
-        item.item.setOffset(item.offset);
-        return item.offset + item.item.getSize();
-      }, null);
 
       this._updateWindowInverseSize();
 
