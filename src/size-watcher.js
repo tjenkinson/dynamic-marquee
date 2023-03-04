@@ -26,7 +26,10 @@ export class SizeWatcher {
     this._observer?.observe($el);
   }
   getWidth() {
-    if (this._width !== null) return this._width;
+    // ignore the cached result if it is 0 because we get notified of the new size async, and it might
+    // have content and not actually be 0 anymore. Treating 0 as a special case because being wrong with 0 is
+    // generally worse than having an actual value
+    if (this._width !== null && this._width !== 0) return this._width;
 
     // maps to `inlineSize`
     const width = pxStringToValue(window.getComputedStyle(this._$el).width);
@@ -34,7 +37,8 @@ export class SizeWatcher {
     return width;
   }
   getHeight() {
-    if (this._height !== null) return this._height;
+    // see comment above for why !== 0
+    if (this._height !== null && this._height !== 0) return this._height;
 
     // maps to `blockSize`
     const height = pxStringToValue(window.getComputedStyle(this._$el).height);
