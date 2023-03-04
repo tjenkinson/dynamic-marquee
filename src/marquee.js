@@ -310,8 +310,10 @@ export class Marquee {
                 ? offsetIfWasTouching
                 : Math.max(
                     // edge case that would happen if new item requested and synchronously provided,
-                    // but before during that another item size increases, meaning this needs to be placed
-                    // further off screen
+                    // but before during that another item size increases, or if new item was provided
+                    // when it wasn't strictly needed, which can happen if you have negative rate,
+                    // switch to positive which requests an item, and then switch back to negative again
+                    // and provide an item
                     offsetIfWasTouching,
                     this._windowOffset + containerSize
                   ),
@@ -319,16 +321,21 @@ export class Marquee {
           ];
         } else {
           const neighbour = first(this._items);
+          const offsetIfWasTouching = neighbour
+            ? neighbour.offset - this._pendingItem.getSize()
+            : this._windowOffset + containerSize - this._pendingItem.getSize();
           this._items = [
             {
               item: this._pendingItem,
               offset: newItemWouldBeTouching
-                ? neighbour
-                  ? neighbour.offset - this._pendingItem.getSize()
-                  : this._windowOffset +
-                    containerSize -
-                    this._pendingItem.getSize()
-                : this._windowOffset - this._pendingItem.getSize(),
+                ? offsetIfWasTouching
+                : Math.min(
+                    // edge case that would happen if new item was provided when it wasn't strictly needed,
+                    // which can happen if you have positive rate, switch to negative which requests an item,
+                    // and then switch back to positive again and provide an item
+                    offsetIfWasTouching,
+                    this._windowOffset - this._pendingItem.getSize()
+                  ),
             },
             ...this._items,
           ];
