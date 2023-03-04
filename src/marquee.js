@@ -295,19 +295,26 @@ export class Marquee {
 
       if (this._pendingItem) {
         this._$moving.appendChild(this._pendingItem.getContainer());
-        const touching =
+        const neighbour =
           this._rate <= 0 ? last(this._items) : first(this._items);
         if (this._rate <= 0) {
+          const offsetIfWasTouching = neighbour
+            ? neighbour.offset + neighbour.item.getSize()
+            : this._windowOffset;
           this._items = [
             ...this._items,
             {
               item: this._pendingItem,
               appendRate: this._rate,
               offset: newItemWouldBeTouching
-                ? touching
-                  ? touching.offset + touching.item.getSize()
-                  : this._windowOffset
-                : this._windowOffset + containerSize,
+                ? offsetIfWasTouching
+                : Math.max(
+                    // edge case that would happen if new item requested and synchronously provided,
+                    // but before during that another item size increases, meaning this needs to be placed
+                    // further off screen
+                    offsetIfWasTouching,
+                    this._windowOffset + containerSize
+                  ),
             },
           ];
         } else {
@@ -316,8 +323,8 @@ export class Marquee {
               item: this._pendingItem,
               appendRate: this._rate,
               offset: newItemWouldBeTouching
-                ? touching
-                  ? touching.offset - this._pendingItem.getSize()
+                ? neighbour
+                  ? neighbour.offset - this._pendingItem.getSize()
                   : this._windowOffset +
                     containerSize -
                     this._pendingItem.getSize()
