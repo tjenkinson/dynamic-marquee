@@ -303,7 +303,7 @@ export class Marquee {
           const neighbour = last(this._items);
           const offsetIfWasTouching = neighbour
             ? neighbour.offset + neighbour.item.getSize()
-            : this._windowOffset + containerSize;
+            : this._windowOffset;
           this._items = [
             ...this._items,
             {
@@ -325,7 +325,7 @@ export class Marquee {
           const neighbour = first(this._items);
           const offsetIfWasTouching = neighbour
             ? neighbour.offset - this._pendingItem.getSize()
-            : this._windowOffset - this._pendingItem.getSize();
+            : this._windowOffset + containerSize - this._pendingItem.getSize();
           this._items = [
             {
               item: this._pendingItem,
