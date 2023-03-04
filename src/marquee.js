@@ -95,19 +95,16 @@ export class Marquee {
 
     if (rate * this._lastEffectiveRate < 0) {
       this._justReversedRate = !this._justReversedRate;
+      // flip to false which will cause a new item to be asked for if necessary
+      this._waitingForItem = this._askedForItem = false;
     }
 
     this._rate = rate;
     if (rate) {
       this._lastEffectiveRate = rate;
-      if (!this._items.length) {
-        this._waitingForItem = true;
-      }
-    } else {
-      this._waitingForItem = false;
     }
 
-    this._tick(this._waitingForItem);
+    this._tick(true);
   }
 
   getRate() {
@@ -119,6 +116,7 @@ export class Marquee {
       this._items.forEach(({ item }) => this._removeItem(item));
       this._items = [];
       this._waitingForItem = true;
+      this._askedForItem = true;
       this._nextItemWouldBeTouching = false;
       this._updateWindowInverseSize();
       this._cleanup();
@@ -283,14 +281,16 @@ export class Marquee {
       const justReversedRate = this._justReversedRate;
       this._justReversedRate = false;
       const newItemWouldBeTouching = this._nextItemWouldBeTouching;
-      this._nextItemWouldBeTouching = null;
+      this._nextItemWouldBeTouching = false;
       let nextItemTouching = null;
 
       // calculate what the new offsets should be given item sizes may have changed
       this._items.reduce((newOffset, item) => {
-        if (newOffset !== null && item.offset < newOffset) {
-          // the size of the item before has increased and would now be overlapping
-          // this one, so shuffle this one along.
+        if (
+          newOffset !== null &&
+          // size of the item before has increased and would be overlapping
+          item.offset < newOffset
+        ) {
           item.offset = newOffset;
         }
         item.item.setOffset(item.offset);
@@ -303,7 +303,7 @@ export class Marquee {
           const neighbour = last(this._items);
           const offsetIfWasTouching = neighbour
             ? neighbour.offset + neighbour.item.getSize()
-            : this._windowOffset;
+            : this._windowOffset + containerSize;
           this._items = [
             ...this._items,
             {
@@ -325,7 +325,7 @@ export class Marquee {
           const neighbour = first(this._items);
           const offsetIfWasTouching = neighbour
             ? neighbour.offset - this._pendingItem.getSize()
-            : this._windowOffset + containerSize - this._pendingItem.getSize();
+            : this._windowOffset - this._pendingItem.getSize();
           this._items = [
             {
               item: this._pendingItem,
@@ -345,34 +345,39 @@ export class Marquee {
         this._pendingItem = null;
       }
 
-      // add a buffer on the side to make sure that new elements are added before they would actually be on screen
-      const buffer = (renderInterval / 1000) * Math.abs(this._rate);
-      let requireNewItem = this._waitingForItem;
-      if (
-        !this._waitingForItem &&
-        this._items.length /* there should always be items at this point */
-      ) {
-        const firstItem = first(this._items);
-        const lastItem = last(this._items);
-        const touching = this._lastEffectiveRate <= 0 ? lastItem : firstItem;
-        if (
-          (this._lastEffectiveRate <= 0 &&
-            lastItem.offset + lastItem.item.getSize() - this._windowOffset <=
-              containerSize + buffer) ||
-          (this._lastEffectiveRate > 0 &&
-            firstItem.offset - this._windowOffset > -1 * buffer)
-        ) {
-          this._waitingForItem = requireNewItem = true;
-          // if an item is appended immediately below, it would be considered touching
-          // the previous if we haven't just changed direction.
-          // This is useful when deciding whether to add a separator on the side that enters the
-          // screen first or not
-          nextItemTouching = justReversedRate
-            ? null
-            : {
-                $el: touching.item.getOriginalEl(),
-                metadata: touching.item.getMetadata(),
-              };
+      if (!this._waitingForItem && this._rate !== 0) {
+        if (this._items.length) {
+          // add a buffer on the side to make sure that new elements are added before they would actually be on screen
+          const buffer = (renderInterval / 1000) * Math.abs(this._rate);
+          if (!this._waitingForItem && this._rate !== 0) {
+            const firstItem = first(this._items);
+            const lastItem = last(this._items);
+            const touching =
+              this._lastEffectiveRate <= 0 ? lastItem : firstItem;
+            if (
+              (this._lastEffectiveRate <= 0 &&
+                lastItem.offset +
+                  lastItem.item.getSize() -
+                  this._windowOffset <=
+                  containerSize + buffer) ||
+              (this._lastEffectiveRate > 0 &&
+                firstItem.offset - this._windowOffset > -1 * buffer)
+            ) {
+              this._waitingForItem = true;
+              // if an item is appended immediately below, it would be considered touching
+              // the previous if we haven't just changed direction.
+              // This is useful when deciding whether to add a separator on the side that enters the
+              // screen first or not
+              nextItemTouching = !justReversedRate
+                ? {
+                    $el: touching.item.getOriginalEl(),
+                    metadata: touching.item.getMetadata(),
+                  }
+                : null;
+            }
+          }
+        } else {
+          this._waitingForItem = true;
         }
       }
 
@@ -395,7 +400,7 @@ export class Marquee {
 
       this._updateWindowInverseSize();
 
-      if (requireNewItem && !this._askedForItem) {
+      if (this._waitingForItem && !this._askedForItem) {
         this._askedForItem = true;
         let nextItem;
         this._onItemRequired.some((cb) => {
