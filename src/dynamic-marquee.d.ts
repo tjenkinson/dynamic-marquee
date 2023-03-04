@@ -10,6 +10,7 @@ export type Item = HTMLElement | string | number;
 
 export type AppendItemConfig<TMetadata> = {
   metadata?: TMetadata;
+  snapToNeighbour?: boolean;
 };
 
 export type Touching<TMetadata> = {

@@ -2,7 +2,7 @@ import { DIRECTION } from './direction.js';
 import { SizeWatcher } from './size-watcher.js';
 
 export class Item {
-  constructor($el, direction, metadata, onSizeChange) {
+  constructor($el, direction, metadata, snapToNeighbor, onSizeChange) {
     const $container = document.createElement('div');
     $container.style.all = 'unset';
     $container.style.display = 'block';
@@ -21,6 +21,7 @@ export class Item {
     this._$el = $el;
     this._direction = direction;
     this._metadata = metadata;
+    this._snapToNeighbor = snapToNeighbor;
     this._offset = null;
   }
   getSize({ inverse = false } = {}) {
@@ -55,5 +56,8 @@ export class Item {
   }
   getMetadata() {
     return this._metadata;
+  }
+  getSnapToNeighbor() {
+    return this._snapToNeighbor;
   }
 }

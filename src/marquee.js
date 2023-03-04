@@ -31,12 +31,13 @@ export class Marquee {
 
     this._waitingForItem = true;
     this._askedForItem = true;
-    this._nextItemWouldBeTouching = startOnScreen;
+    this._nextAppendIsSynchronous = false;
     this._rate = rate;
     this._lastEffectiveRate = rate;
     this._justReversedRate = false;
     this._correlation = null;
     this._direction = upDown ? DIRECTION.DOWN : DIRECTION.RIGHT;
+    this._startOnScreen = startOnScreen;
     this._onItemRequired = [];
     this._onItemRemoved = [];
     this._onAllItemsRemoved = [];
@@ -119,7 +120,7 @@ export class Marquee {
       this._items = [];
       this._waitingForItem = true;
       this._askedForItem = true;
-      this._nextItemWouldBeTouching = false;
+      this._nextAppendIsSynchronous = false;
       this._updateWindowInverseSize();
       this._cleanup();
     });
@@ -129,7 +130,7 @@ export class Marquee {
     return this._waitingForItem;
   }
 
-  appendItem($el, { metadata = null } = {}) {
+  appendItem($el, { metadata = null, snapToNeighbour = false } = {}) {
     this._boundary.enter(() => {
       if (!this._waitingForItem) {
         throw new Error('No room for item.');
@@ -144,8 +145,19 @@ export class Marquee {
       }
       this._waitingForItem = false;
       this._askedForItem = false;
-      this._pendingItem = new Item($el, this._direction, metadata, () =>
-        this._tickOnRaf()
+      const resolvedSnap =
+        snapToNeighbour ||
+        (this._startOnScreen && !this._items.length) ||
+        this._nextAppendIsSynchronous;
+
+      this._nextAppendIsSynchronous = false;
+
+      this._pendingItem = new Item(
+        $el,
+        this._direction,
+        metadata,
+        resolvedSnap,
+        () => this._tickOnRaf()
       );
       this._tick();
     });
@@ -282,16 +294,25 @@ export class Marquee {
       const containerSize = Math.max(this._containerSize, 1);
       const justReversedRate = this._justReversedRate;
       this._justReversedRate = false;
-      const newItemWouldBeTouching = this._nextItemWouldBeTouching;
-      this._nextItemWouldBeTouching = false;
-      let nextItemTouching = null;
+
+      // remove items that are off screen
+      this._items = [...this._items].filter(({ item, offset }) => {
+        const keep =
+          this._lastEffectiveRate <= 0
+            ? offset + item.getSize() > this._windowOffset
+            : offset < this._windowOffset + containerSize;
+        if (!keep) this._removeItem(item);
+        return keep;
+      });
 
       // calculate what the new offsets should be given item sizes may have changed
       this._items.reduce((newOffset, item) => {
         if (
           newOffset !== null &&
           // size of the item before has increased and would be overlapping
-          item.offset < newOffset
+          (item.offset < newOffset ||
+            // this item is meant to always snap to the previous
+            item.item.getSnapToNeighbor())
         ) {
           item.offset = newOffset;
         }
@@ -310,7 +331,7 @@ export class Marquee {
             ...this._items,
             {
               item: this._pendingItem,
-              offset: newItemWouldBeTouching
+              offset: this._pendingItem.getSnapToNeighbor()
                 ? offsetIfWasTouching
                 : Math.max(
                     // edge case that would happen if new item requested and synchronously provided,
@@ -331,7 +352,7 @@ export class Marquee {
           this._items = [
             {
               item: this._pendingItem,
-              offset: newItemWouldBeTouching
+              offset: this._pendingItem.getSnapToNeighbor()
                 ? offsetIfWasTouching
                 : Math.min(
                     // edge case that would happen if new item was provided when it wasn't strictly needed,
@@ -347,6 +368,7 @@ export class Marquee {
         this._pendingItem = null;
       }
 
+      let nextItemTouching = null;
       if (!this._waitingForItem && this._rate !== 0) {
         if (this._items.length) {
           // add a buffer on the side to make sure that new elements are added before they would actually be on screen
@@ -354,7 +376,7 @@ export class Marquee {
           if (!this._waitingForItem && this._rate !== 0) {
             const firstItem = first(this._items);
             const lastItem = last(this._items);
-            const touching =
+            const neighbour =
               this._lastEffectiveRate <= 0 ? lastItem : firstItem;
             if (
               (this._lastEffectiveRate <= 0 &&
@@ -372,8 +394,8 @@ export class Marquee {
               // screen first or not
               nextItemTouching = !justReversedRate
                 ? {
-                    $el: touching.item.getOriginalEl(),
-                    metadata: touching.item.getMetadata(),
+                    $el: neighbour.item.getOriginalEl(),
+                    metadata: neighbour.item.getMetadata(),
                   }
                 : null;
             }
@@ -382,19 +404,6 @@ export class Marquee {
           this._waitingForItem = true;
         }
       }
-
-      if (nextItemTouching) {
-        this._nextItemWouldBeTouching = true;
-      }
-
-      this._items = [...this._items].filter(({ item, offset }) => {
-        const keep =
-          this._lastEffectiveRate <= 0
-            ? offset + item.getSize() > this._windowOffset
-            : offset < this._windowOffset + containerSize;
-        if (!keep) this._removeItem(item);
-        return keep;
-      });
 
       if (!this._items.length) {
         this._onAllItemsRemoved.forEach((cb) => callbacks.push(cb));
@@ -405,6 +414,9 @@ export class Marquee {
       if (this._waitingForItem && !this._askedForItem) {
         this._askedForItem = true;
         let nextItem;
+        if (nextItemTouching) {
+          this._nextAppendIsSynchronous = true;
+        }
         this._onItemRequired.some((cb) => {
           return deferException(() => {
             nextItem = cb({
@@ -419,7 +431,7 @@ export class Marquee {
           // Note appendItem() will call _tick() synchronously again
           this.appendItem(nextItem);
         }
-        this._nextItemWouldBeTouching = false;
+        this._nextAppendIsSynchronous = false;
       }
     });
   }
