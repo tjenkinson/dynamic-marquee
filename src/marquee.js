@@ -297,9 +297,8 @@ export class Marquee {
 
       if (this._pendingItem) {
         this._$moving.appendChild(this._pendingItem.getContainer());
-        const neighbour =
-          this._rate <= 0 ? last(this._items) : first(this._items);
-        if (this._rate <= 0) {
+        if (this._lastEffectiveRate <= 0) {
+          const neighbour = last(this._items);
           const offsetIfWasTouching = neighbour
             ? neighbour.offset + neighbour.item.getSize()
             : this._windowOffset;
@@ -307,7 +306,6 @@ export class Marquee {
             ...this._items,
             {
               item: this._pendingItem,
-              appendRate: this._rate,
               offset: newItemWouldBeTouching
                 ? offsetIfWasTouching
                 : Math.max(
@@ -320,10 +318,10 @@ export class Marquee {
             },
           ];
         } else {
+          const neighbour = first(this._items);
           this._items = [
             {
               item: this._pendingItem,
-              appendRate: this._rate,
               offset: newItemWouldBeTouching
                 ? neighbour
                   ? neighbour.offset - this._pendingItem.getSize()
@@ -347,12 +345,12 @@ export class Marquee {
       ) {
         const firstItem = first(this._items);
         const lastItem = last(this._items);
-        const touching = this._rate <= 0 ? lastItem : firstItem;
+        const touching = this._lastEffectiveRate <= 0 ? lastItem : firstItem;
         if (
-          (this._rate <= 0 &&
+          (this._lastEffectiveRate <= 0 &&
             lastItem.offset + lastItem.item.getSize() - this._windowOffset <=
               containerSize + buffer) ||
-          (this._rate > 0 &&
+          (this._lastEffectiveRate > 0 &&
             firstItem.offset - this._windowOffset > -1 * buffer)
         ) {
           this._waitingForItem = requireNewItem = true;
@@ -375,7 +373,7 @@ export class Marquee {
 
       this._items = [...this._items].filter(({ item, offset }) => {
         const keep =
-          this._rate <= 0
+          this._lastEffectiveRate <= 0
             ? offset + item.getSize() > this._windowOffset
             : offset < this._windowOffset + containerSize;
         if (!keep) this._removeItem(item);
