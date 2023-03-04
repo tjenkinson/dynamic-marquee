@@ -30,6 +30,7 @@ export class Marquee {
     });
 
     this._waitingForItem = true;
+    this._askedForItem = true;
     this._nextItemWouldBeTouching = startOnScreen;
     this._rate = rate;
     this._lastEffectiveRate = rate;
@@ -142,6 +143,7 @@ export class Marquee {
         throw new Error('Item already exists.');
       }
       this._waitingForItem = false;
+      this._askedForItem = false;
       this._pendingItem = new Item($el, this._direction, metadata, () =>
         this._tickOnRaf()
       );
@@ -393,7 +395,8 @@ export class Marquee {
 
       this._updateWindowInverseSize();
 
-      if (requireNewItem) {
+      if (requireNewItem && !this._askedForItem) {
+        this._askedForItem = true;
         let nextItem;
         this._onItemRequired.some((cb) => {
           return deferException(() => {
