@@ -167,9 +167,11 @@ export class Marquee {
       return;
     }
 
-    const maxSize = Math.max(
-      ...this._items.map(({ item }) => item.getSize({ inverse: true }))
-    );
+    const maxSize = this._items.length
+      ? Math.max(
+          ...this._items.map(({ item }) => item.getSize({ inverse: true }))
+        )
+      : 0;
 
     if (this.windowInverseSize !== maxSize) {
       this.windowInverseSize = maxSize;
