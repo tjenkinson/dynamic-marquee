@@ -375,7 +375,7 @@ export class Marquee {
 
       this._items = [...this._items].filter(({ item, offset }) => {
         const keep =
-          this._rate < 0
+          this._rate <= 0
             ? offset + item.getSize() > this._windowOffset
             : offset < this._windowOffset + containerSize;
         if (!keep) this._removeItem(item);
