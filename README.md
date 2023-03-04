@@ -85,7 +85,10 @@ if (marquee.isWaitingForItem()) {
 }
 ```
 
-`appendItem` also takes an optional second param `config` object, which should contain a `metadata` property. The value of this will be provided back to you in `onItemRequired`.
+`appendItem` also takes an optional second param `config` object, which can contain:
+
+- `metadata`: The value of this will be provided back to you in `onItemRequired`.
+- `snapToNeighbour`: If `true` the item will snap to the end of the neighbouring item instead of starting off screen.
 
 You can be notified when an item is required with
 
