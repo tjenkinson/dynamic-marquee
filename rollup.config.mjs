@@ -18,9 +18,15 @@ export default {
   onwarn: (e) => {
     throw new Error(e);
   },
-  output: {
-    name: 'dynamicMarquee',
-    file: 'dist/dynamic-marquee.js',
-    format: 'umd',
-  },
+  output: [
+    {
+      name: 'dynamicMarquee',
+      file: 'dist/dynamic-marquee.js',
+      format: 'umd',
+    },
+    {
+      file: 'dist/dynamic-marquee.mjs',
+      format: 'es',
+    },
+  ],
 };
