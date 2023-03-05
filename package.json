@@ -3,6 +3,7 @@
   "version": "2.3.14",
   "description": "A small library for creating marquees.",
   "main": "./dist/dynamic-marquee.js",
+  "module": "./dist/dynamic-marquee.mjs",
   "types": "./dist/dynamic-marquee.d.ts",
   "scripts": {
     "build": "rollup --config rollup.config.mjs",
