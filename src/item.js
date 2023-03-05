@@ -4,11 +4,10 @@ import { SizeWatcher } from './size-watcher.js';
 export class Item {
   constructor($el, direction, metadata, onSizeChange) {
     const $container = document.createElement('div');
+    $container.style.all = 'unset';
     $container.style.display = 'block';
     $container.style.opacity = '0';
     $container.style.position = 'absolute';
-    $container.style.margin = '0';
-    $container.style.padding = '0';
     if (direction === DIRECTION.RIGHT) {
       $container.style.whiteSpace = 'nowrap';
     } else {

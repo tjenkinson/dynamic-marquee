@@ -48,6 +48,7 @@ export class Marquee {
     this._visible = !!document.hidden;
     this._waitingForRaf = false;
     const $window = document.createElement('div');
+    $window.style.all = 'unset';
     $window.style.display = 'block';
     $window.style.overflow = 'hidden';
     $window.style.position = 'relative';
@@ -59,6 +60,7 @@ export class Marquee {
     this._updateWindowInverseSize();
     const $moving = document.createElement('div');
     this._$moving = $moving;
+    $moving.style.all = 'unset';
     $moving.style.display = 'block';
     $moving.style.position = 'absolute';
     $moving.style.left = '0';
