@@ -43,7 +43,6 @@ export class Marquee {
     this._onAllItemsRemoved = [];
     this._windowOffset = 0;
     this._containerSize = 0;
-    this._containerSizeWatcher = null;
     this._items = [];
     this._pendingItem = null;
     this._visible = !!document.hidden;
@@ -57,6 +56,8 @@ export class Marquee {
       $window.style.height = '100%';
     }
     this._$window = $window;
+    this._containerSizeWatcher = new SizeWatcher($window);
+    this._containerSizeWatcher.onSizeChange(() => this._tickOnRaf());
     this.windowInverseSize = null;
     this._updateWindowInverseSize();
     const $moving = document.createElement('div');
@@ -130,13 +131,27 @@ export class Marquee {
     return this._waitingForItem;
   }
 
-  appendItem($el, { metadata = null, snapToNeighbour = false } = {}) {
+  watchItemSize(elOrString) {
+    const $el = toDomEl(elOrString);
+    const item = new Item({
+      $el,
+      direction: this._direction,
+    });
+    this._$window.appendChild(item.getContainer());
+
+    return {
+      getSize: () => item.getSize(),
+      onSizeChange: item.onSizeChange,
+      stopWatching: () => item.remove(),
+    };
+  }
+
+  appendItem(elOrString, { metadata = null, snapToNeighbour = false } = {}) {
     this._boundary.enter(() => {
       if (!this._waitingForItem) {
         throw new Error('No room for item.');
       }
-      // convert to div if $el is a string
-      $el = toDomEl($el);
+      const $el = toDomEl(elOrString);
       const itemAlreadyExists = this._items.some(({ item }) => {
         return item.getOriginalEl() === $el;
       });
@@ -152,13 +167,13 @@ export class Marquee {
 
       this._nextAppendIsSynchronous = false;
 
-      this._pendingItem = new Item(
+      this._pendingItem = new Item({
         $el,
-        this._direction,
+        direction: this._direction,
         metadata,
-        resolvedSnap,
-        () => this._tickOnRaf()
-      );
+        snapToNeighbor: resolvedSnap,
+      });
+      this._pendingItem.onSizeChange(() => this._tickOnRaf());
       this._tick();
     });
   }
@@ -205,8 +220,6 @@ export class Marquee {
   }
 
   _cleanup() {
-    this._containerSizeWatcher?.tearDown();
-    this._containerSizeWatcher = null;
     this._correlation = null;
     this._windowOffset = 0;
   }
@@ -237,12 +250,6 @@ export class Marquee {
         // pause if we've been removed from the dom
         this._correlation = null;
         return;
-      }
-
-      if (!this._containerSizeWatcher) {
-        this._containerSizeWatcher = new SizeWatcher(this._$window, () =>
-          this._tickOnRaf()
-        );
       }
 
       const now = performance.now();
