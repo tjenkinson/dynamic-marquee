@@ -2,11 +2,12 @@ import { DIRECTION } from './direction.js';
 import { SizeWatcher } from './size-watcher.js';
 
 export class Item {
-  constructor($el, direction, metadata, snapToNeighbor, onSizeChange) {
+  constructor({ $el, direction, metadata, snapToNeighbor }) {
     const $container = document.createElement('div');
     $container.style.all = 'unset';
     $container.style.display = 'block';
     $container.style.opacity = '0';
+    $container.style.pointerEvents = 'none';
     $container.style.position = 'absolute';
     if (direction === DIRECTION.RIGHT) {
       $container.style.whiteSpace = 'nowrap';
@@ -14,7 +15,9 @@ export class Item {
       $container.style.left = '0';
       $container.style.right = '0';
     }
-    this._sizeWatcher = new SizeWatcher($container, onSizeChange);
+    $container.setAttribute('aria-hidden', 'true');
+    this._sizeWatcher = new SizeWatcher($container);
+    this.onSizeChange = this._sizeWatcher.onSizeChange;
     $container.appendChild($el);
 
     this._$container = $container;
@@ -37,7 +40,9 @@ export class Item {
     if (this._offset === offset) return;
 
     this._offset = offset;
-    this._$container.style.opacity = '1';
+    this._$container.style.removeProperty('opacity');
+    this._$container.style.removeProperty('pointer-events');
+    this._$container.removeAttribute('aria-hidden');
     if (this._direction === DIRECTION.RIGHT) {
       this._$container.style.left = `${offset}px`;
     } else {

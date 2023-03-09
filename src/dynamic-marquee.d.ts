@@ -34,7 +34,12 @@ export class Marquee<TMetadata = null> {
   getRate(): number;
   clear(): void;
   isWaitingForItem(): boolean;
-  appendItem($el: Item, config?: AppendItemConfig<TMetadata>): void;
+  appendItem(item: Item, config?: AppendItemConfig<TMetadata>): void;
+  watchItemSize(item: Item): {
+    getSize: () => number;
+    onSizeChange: (callback: () => void) => () => void;
+    stopWatching: () => void;
+  };
 }
 
 export type LoopBuilder = () => Item;

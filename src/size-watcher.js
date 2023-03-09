@@ -1,3 +1,5 @@
+import { Listeners } from './listeners';
+
 const PX_REGEX = /px$/;
 
 function pxStringToValue(input) {
@@ -8,7 +10,9 @@ function pxStringToValue(input) {
 }
 
 export class SizeWatcher {
-  constructor($el, onChange) {
+  constructor($el) {
+    const listeners = Listeners();
+    this.onSizeChange = listeners.add;
     this._$el = $el;
     this._width = null;
     this._height = null;
@@ -19,7 +23,7 @@ export class SizeWatcher {
             const size = entry.borderBoxSize[0] || entry.borderBoxSize;
             this._width = size.inlineSize;
             this._height = size.blockSize;
-            onChange();
+            listeners.invoke();
           })
         : null;
 
