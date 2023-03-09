@@ -376,24 +376,31 @@ export class Marquee {
       }
 
       let nextItemTouching = null;
+      let sizeToFill = 0;
+
       if (!this._waitingForItem && this._rate !== 0) {
+        // add a buffer on the side to make sure that new elements are added before they would actually be on screen
+        const buffer = (renderInterval / 1000) * Math.abs(this._rate);
+
         if (this._items.length) {
-          // add a buffer on the side to make sure that new elements are added before they would actually be on screen
-          const buffer = (renderInterval / 1000) * Math.abs(this._rate);
           if (!this._waitingForItem && this._rate !== 0) {
             const firstItem = first(this._items);
             const lastItem = last(this._items);
             const neighbour =
               this._lastEffectiveRate <= 0 ? lastItem : firstItem;
-            if (
-              (this._lastEffectiveRate <= 0 &&
-                lastItem.offset +
+
+            if (this._lastEffectiveRate <= 0) {
+              sizeToFill =
+                containerSize +
+                buffer -
+                (lastItem.offset +
                   lastItem.item.getSize() -
-                  this._windowOffset <=
-                  containerSize + buffer) ||
-              (this._lastEffectiveRate > 0 &&
-                firstItem.offset - this._windowOffset > -1 * buffer)
-            ) {
+                  this._windowOffset);
+            } else {
+              sizeToFill = firstItem.offset - this._windowOffset + buffer;
+            }
+
+            if (sizeToFill > 0) {
               this._waitingForItem = true;
               // if an item is appended immediately below, it would be considered touching
               // the previous if we haven't just changed direction.
@@ -409,6 +416,7 @@ export class Marquee {
           }
         } else {
           this._waitingForItem = true;
+          sizeToFill = containerSize + buffer;
         }
       }
 
@@ -430,6 +438,7 @@ export class Marquee {
               /** @deprecated */
               immediatelyFollowsPrevious: !!nextItemTouching,
               touching: nextItemTouching,
+              sizeToFill,
             });
             return !!nextItem;
           });

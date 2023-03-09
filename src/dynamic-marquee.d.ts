@@ -25,6 +25,7 @@ export class Marquee<TMetadata = null> {
       /** @deprecated use `touching !== null` instead */
       immediatelyFollowsPrevious: boolean;
       touching: Touching<TMetadata> | null;
+      sizeToFill: number;
     }) => Item | void
   ): void;
   onItemRemoved(callback: ($el: HTMLElement) => void): void;
