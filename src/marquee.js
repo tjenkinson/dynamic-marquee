@@ -42,7 +42,7 @@ export class Marquee {
     this._onItemRemoved = [];
     this._onAllItemsRemoved = [];
     this._windowOffset = 0;
-    this._containerSize = 0;
+    this._gapSize = 0;
     this._items = [];
     this._pendingItem = null;
     this._visible = !!document.hidden;
@@ -178,6 +178,50 @@ export class Marquee {
     });
   }
 
+  /**
+   * Returns the amount of pixels that need to be filled.
+   *
+   * If `snapToNeighbour` is `true` then this includes the empty space
+   * after the neighbouring item.
+   *
+   * If `snapToNeighbour` is `false`, then this will just contain the buffer
+   * space, unless the `startOnScreen` option is `true` and there are currently
+   * no items.
+   */
+  getGapSize({ snapToNeighbour } = {}) {
+    if (!this._waitingForItem) return 0;
+
+    let size;
+    if (this._items.length) {
+      size = snapToNeighbour ? this._gapSize : this._getBuffer();
+    } else {
+      size =
+        this._startOnScreen || snapToNeighbour
+          ? this._getContainerSize() + this._getBuffer()
+          : this._getBuffer();
+    }
+
+    // if we're waiting for an item pretend it's at least 1 to handle cases like where we request for an item
+    // but then the container size gets smalller meaning in reality the gap size becomes negative. If this happens
+    // we don't flip from wanting an item to not wanting one so pretend there is some space.
+    return Math.max(1, size);
+  }
+
+  _getContainerSize() {
+    // if container has size 0 pretend it is 1 to prevent infinite loop
+    // of adding items that are instantly removed
+    return Math.max(
+      this._direction === DIRECTION.RIGHT
+        ? this._containerSizeWatcher.getWidth()
+        : this._containerSizeWatcher.getHeight(),
+      1
+    );
+  }
+
+  _getBuffer() {
+    return (renderInterval / 1000) * Math.abs(this._rate);
+  }
+
   _removeItem(item) {
     this._boundary.enter(({ callbacks }) => {
       item.remove();
@@ -291,14 +335,7 @@ export class Marquee {
         };
       }
 
-      this._containerSize =
-        this._direction === DIRECTION.RIGHT
-          ? this._containerSizeWatcher.getWidth()
-          : this._containerSizeWatcher.getHeight();
-
-      // if container has size 0 pretend it is 1 to prevent infinite loop
-      // of adding items that are instantly removed
-      const containerSize = Math.max(this._containerSize, 1);
+      const containerSize = this._getContainerSize();
       const justReversedRate = this._justReversedRate;
       this._justReversedRate = false;
 
@@ -376,48 +413,40 @@ export class Marquee {
       }
 
       let nextItemTouching = null;
-      let sizeToFill = 0;
+      this._gapSize = 0;
 
-      if (!this._waitingForItem && this._rate !== 0) {
-        // add a buffer on the side to make sure that new elements are added before they would actually be on screen
-        const buffer = (renderInterval / 1000) * Math.abs(this._rate);
+      // add a buffer on the side to make sure that new elements are added before they would actually be on screen
+      const buffer = this._getBuffer();
 
-        if (this._items.length) {
-          if (!this._waitingForItem && this._rate !== 0) {
-            const firstItem = first(this._items);
-            const lastItem = last(this._items);
-            const neighbour =
-              this._lastEffectiveRate <= 0 ? lastItem : firstItem;
+      if (this._items.length) {
+        const firstItem = first(this._items);
+        const lastItem = last(this._items);
+        const neighbour = this._lastEffectiveRate <= 0 ? lastItem : firstItem;
 
-            if (this._lastEffectiveRate <= 0) {
-              sizeToFill =
-                containerSize +
-                buffer -
-                (lastItem.offset +
-                  lastItem.item.getSize() -
-                  this._windowOffset);
-            } else {
-              sizeToFill = firstItem.offset - this._windowOffset + buffer;
-            }
-
-            if (sizeToFill > 0) {
-              this._waitingForItem = true;
-              // if an item is appended immediately below, it would be considered touching
-              // the previous if we haven't just changed direction.
-              // This is useful when deciding whether to add a separator on the side that enters the
-              // screen first or not
-              nextItemTouching = !justReversedRate
-                ? {
-                    $el: neighbour.item.getOriginalEl(),
-                    metadata: neighbour.item.getMetadata(),
-                  }
-                : null;
-            }
-          }
+        if (this._lastEffectiveRate <= 0) {
+          this._gapSize =
+            containerSize +
+            buffer -
+            (lastItem.offset + lastItem.item.getSize() - this._windowOffset);
         } else {
-          this._waitingForItem = true;
-          sizeToFill = containerSize + buffer;
+          this._gapSize = firstItem.offset - this._windowOffset + buffer;
         }
+
+        if (this._gapSize > 0) {
+          this._waitingForItem = true;
+          // if an item is appended immediately below, it would be considered touching
+          // the previous if we haven't just changed direction.
+          // This is useful when deciding whether to add a separator on the side that enters the
+          // screen first or not
+          nextItemTouching = !justReversedRate
+            ? {
+                $el: neighbour.item.getOriginalEl(),
+                metadata: neighbour.item.getMetadata(),
+              }
+            : null;
+        }
+      } else {
+        this._waitingForItem = true;
       }
 
       if (!this._items.length) {
@@ -438,7 +467,6 @@ export class Marquee {
               /** @deprecated */
               immediatelyFollowsPrevious: !!nextItemTouching,
               touching: nextItemTouching,
-              sizeToFill,
             });
             return !!nextItem;
           });
