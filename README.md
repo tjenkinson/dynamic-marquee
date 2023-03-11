@@ -1,5 +1,3 @@
-[![npm version](https://badge.fury.io/js/dynamic-marquee.svg)](https://badge.fury.io/js/dynamic-marquee)
-
 # Dynamic Marquee
 
 A small library for creating marquees.
@@ -16,9 +14,9 @@ A [`loop()`](#loop) helper function is also provided which makes creating a caro
 
 # Demo
 
-View the demo [here](https://tjenkinson.github.io/dynamic-marquee/demo.html).
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/tjenkinson/dynamic-marquee/demo?title='Dynamic%20Marquee%20Demo)
 
-View the code at "[demo.html](./demo.html)".
+View the code in "[demo](./demo)".
 
 # Installation
 
