@@ -93,7 +93,7 @@ if (marquee.isWaitingForItem()) {
 You can be notified when an item is required with
 
 ```js
-marquee.onItemRequired(({ touching, sizeToFill }) => {
+marquee.onItemRequired(({ touching }) => {
   // For convenience if you have an item ready to go you can just return it
   // in place of `marquee.appendItem($item);`
 
