@@ -14,7 +14,7 @@ A [`loop()`](#loop) helper function is also provided which makes creating a caro
 
 # Demo
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/tjenkinson/dynamic-marquee/tree/master/demo?title=Dynamic%20Marquee%20Demo)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/tjenkinson/dynamic-marquee/tree/master/demo?title=Dynamic%20Marquee%20Demo&file=src%2Fmain.ts)
 
 View the code in "[demo](./demo)".
 
