@@ -44,7 +44,7 @@ export function loop(marquee, buildersIn = [], seperatorBuilder = null) {
           // if already seen builder, give it the same number
           return prevIndex < i ? prevIndex : i;
         });
-        const newBuildersStructure = newBuilders.map((b, i) => {
+        const newBuildersStructure = newBuilders.map((b) => {
           // matching indexes where they exist, and -1 for all unknown
           return builders.indexOf(b);
         });

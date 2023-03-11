@@ -9,7 +9,7 @@
     "build": "rollup --config rollup.config.mjs",
     "watch": "rollup --config rollup.config.mjs --watch",
     "prettier": "prettier --write .",
-    "lint": "prettier --check .",
+    "lint": "eslint --ext js src && prettier --check .",
     "preversion": "npm run build",
     "prepare": "husky install"
   },
@@ -40,6 +40,7 @@
     "@rollup/plugin-commonjs": "^24.0.1",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@tjenkinson/boundary": "^2.0.0",
+    "eslint": "^8.36.0",
     "husky": "^8.0.3",
     "longest-common-substring": "0.0.1",
     "prettier": "^2.0.2",
