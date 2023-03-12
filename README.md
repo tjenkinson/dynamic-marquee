@@ -12,13 +12,17 @@ Features:
 
 A [`loop()`](#loop) helper function is also provided which makes creating a carousel with looping content simple.
 
-# Demo
+## Using react?
+
+Checkout "[dynamic-marquee-react](https://github.com/tjenkinson/dynamic-marquee-react)" instead!
+
+## Demo
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/tjenkinson/dynamic-marquee/tree/master/demo?title=Dynamic%20Marquee%20Demo&file=src%2Fmain.ts)
 
 View the code in "[demo](./demo)".
 
-# Installation
+## Installation
 
 ```
 npm install --save dynamic-marquee
@@ -43,17 +47,17 @@ or
 
 thanks to [jsDelivr](https://github.com/jsdelivr/jsdelivr).
 
-# Usage
+## Usage
 
-## Construct Marquee Instance
+### Construct Marquee Instance
 
-### With Default Options
+#### With Default Options
 
 ```js
 const marquee = new Marquee(document.getElementById('marquee'));
 ```
 
-### With Custom Options
+#### With Custom Options
 
 ```js
 const marquee = new Marquee(document.getElementById('marquee'), {
@@ -63,7 +67,7 @@ const marquee = new Marquee(document.getElementById('marquee'), {
 });
 ```
 
-## Append Item
+### Append Item
 
 You can add DOM elements, or just a string (which will automatically be wrapped in a div).
 
@@ -108,7 +112,7 @@ marquee.onItemRequired(({ touching }) => {
 
 If you need to perform some work in this method consider wrapping it in a `setTimeout` with delay 0.
 
-## Change the scroll rate? (px/s)
+### Change the scroll rate? (px/s)
 
 You can change the rate at any time, and set to 0 to pause.
 
@@ -118,7 +122,7 @@ marquee.setRate(-20);
 
 Note if you change the direction, `isWaitingForItem()` will change to `false`, and `onItemRequired()` will be called again when needed.
 
-## Reset
+### Reset
 
 To remove all items call
 
@@ -128,7 +132,7 @@ marquee.clear();
 
 You should also call this before removing the marquee from the DOM if you no longer need it to ensure that all timers are cleaned up and garbage collection can occur.
 
-## When has an item been removed?
+### When has an item been removed?
 
 You can be notified when an item has been removed with:
 
@@ -138,7 +142,7 @@ marquee.onItemRemoved(($el) => {
 });
 ```
 
-## When have all items finished scrolling?
+### When have all items finished scrolling?
 
 You can be notified when the scroller is empty with:
 
@@ -154,7 +158,7 @@ You can check at any time with:
 marquee.getNumItems();
 ```
 
-# Loop
+## Loop
 
 A `loop()` function is provided for making looping content simple.
 
