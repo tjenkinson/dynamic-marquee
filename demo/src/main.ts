@@ -3,8 +3,8 @@ import { Marquee, loop, LoopReturn } from 'dynamic-marquee';
 
 declare global {
   interface Window {
-    m: Marquee;
-    l: LoopReturn;
+    m?: Marquee;
+    l?: LoopReturn;
   }
 }
 
