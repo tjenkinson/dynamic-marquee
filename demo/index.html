@@ -3,10 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/dynamic-marquee@2"></script>
+    <!-- <script src="../dist/dynamic-marquee.js"></script> -->
     <title>Dynamic Marquee Demo</title>
+    <style>
+      #marquee {
+        position: fixed;
+        overflow: hidden;
+        margin: 0;
+        padding: 7px 0;
+        font-size: 20px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #c80000;
+        color: #ffffff;
+        font-family: Verdana, Geneva, sans-serif;
+      }
+    </style>
   </head>
   <body>
     <div id="marquee"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module">
+      const { Marquee, loop } = marquee;
+
+      const $marquee = document.getElementById('marquee');
+
+      const marquee = (window.m = new Marquee($marquee, {
+        rate: -100,
+      }));
+
+      window.l = loop(
+        marquee,
+        [
+          () =>
+            'Contrary to popular belief, Lorem Ipsum is not simply random text',
+          () =>
+            'It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old',
+          () =>
+            'Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source',
+          () =>
+            'Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC',
+        ],
+        () => {
+          const $separator = document.createElement('div');
+          $separator.innerHTML = '&nbsp•&nbsp';
+          return $separator;
+        }
+      );
+    </script>
   </body>
 </html>

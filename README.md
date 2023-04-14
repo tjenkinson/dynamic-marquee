@@ -18,7 +18,7 @@ Checkout "[dynamic-marquee-react](https://github.com/tjenkinson/dynamic-marquee-
 
 ## Demo
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/tjenkinson/dynamic-marquee/tree/master/demo?title=Dynamic%20Marquee%20Demo&file=src%2Fmain.ts)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/tjenkinson/dynamic-marquee/tree/master/demo?title=Dynamic%20Marquee%20Demo&file=index.html)
 
 View the code in "[demo](./demo)".
 
