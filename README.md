@@ -20,6 +20,8 @@ Checkout "[dynamic-marquee-react](https://github.com/tjenkinson/dynamic-marquee-
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/tjenkinson/dynamic-marquee/tree/master/demo?title=Dynamic%20Marquee%20Demo&file=src%2Fmain.ts)
 
+or [view a deployed demo](https://dynamic-marquee.tjenkinson.dev/).
+
 View the code in "[demo](./demo)".
 
 ## Installation
