@@ -43,7 +43,7 @@
     "eslint": "^8.36.0",
     "husky": "^8.0.3",
     "longest-common-substring": "0.0.1",
-    "prettier": "^2.0.2",
+    "prettier": "^3.0.0",
     "rollup": "^3.18.0"
   }
 }
