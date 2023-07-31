@@ -51,7 +51,7 @@ export function loop(marquee, buildersIn = [], seperatorBuilder = null) {
 
         const { startString1, startString2, length } = longestSubstring(
           buildersStructure,
-          newBuildersStructure
+          newBuildersStructure,
         );
         if (lastIndex >= startString1 && lastIndex < startString1 + length) {
           // we are in the overlapping region

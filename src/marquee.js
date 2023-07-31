@@ -18,7 +18,7 @@ export class Marquee {
       upDown = false,
       // start on screen
       startOnScreen = false,
-    } = {}
+    } = {},
   ) {
     this._boundary = new Boundary({
       onEnter: () => ({
@@ -214,7 +214,7 @@ export class Marquee {
       this._direction === DIRECTION.RIGHT
         ? this._containerSizeWatcher.getWidth()
         : this._containerSizeWatcher.getHeight(),
-      1
+      1,
     );
   }
 
@@ -242,7 +242,7 @@ export class Marquee {
 
     const maxSize = this._items.length
       ? Math.max(
-          ...this._items.map(({ item }) => item.getSize({ inverse: true }))
+          ...this._items.map(({ item }) => item.getSize({ inverse: true })),
         )
       : 0;
 
@@ -324,7 +324,7 @@ export class Marquee {
       this._slider.setOffset(
         this._windowOffset * -1,
         this._rate,
-        resynced || goneVisible
+        resynced || goneVisible,
       );
 
       if (!this._correlation || this._correlation.rate !== this._rate) {
@@ -384,7 +384,7 @@ export class Marquee {
                     // switch to positive which requests an item, and then switch back to negative again
                     // and provide an item
                     offsetIfWasTouching,
-                    this._windowOffset + containerSize
+                    this._windowOffset + containerSize,
                   ),
             },
           ];
@@ -403,7 +403,7 @@ export class Marquee {
                     // which can happen if you have positive rate, switch to negative which requests an item,
                     // and then switch back to positive again and provide an item
                     offsetIfWasTouching,
-                    this._windowOffset - this._pendingItem.getSize()
+                    this._windowOffset - this._pendingItem.getSize(),
                   ),
             },
             ...this._items,

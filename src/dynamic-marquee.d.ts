@@ -25,7 +25,7 @@ export class Marquee<TMetadata = null> {
       /** @deprecated use `touching !== null` instead */
       immediatelyFollowsPrevious: boolean;
       touching: Touching<TMetadata> | null;
-    }) => Item | void
+    }) => Item | void,
   ): void;
   onItemRemoved(callback: ($el: HTMLElement) => void): void;
   onAllItemsRemoved(callback: () => void): void;
@@ -49,5 +49,5 @@ export type LoopReturn = { update: (newBuilders: LoopBuilder[]) => void };
 export function loop(
   marquee: Marquee,
   buildersIn?: LoopBuilder[],
-  seperatorBuilder?: LoopBuilder | null
+  seperatorBuilder?: LoopBuilder | null,
 ): LoopReturn;
