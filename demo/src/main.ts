@@ -29,5 +29,5 @@ window.l = loop(
     const $separator = document.createElement('div');
     $separator.innerHTML = '&nbsp•&nbsp';
     return $separator;
-  }
+  },
 );
