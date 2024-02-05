@@ -41,7 +41,7 @@
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@tjenkinson/boundary": "^2.0.0",
     "eslint": "^8.36.0",
-    "husky": "^8.0.3",
+    "husky": "^9.0.10",
     "longest-common-substring": "0.0.1",
     "prettier": "^3.0.0",
     "rollup": "^3.18.0"
