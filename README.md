@@ -104,7 +104,7 @@ marquee.onItemRequired(({ touching }) => {
   // If the new item would be touching another then `touching`
   // will be set to an object that contains `$el` and `metadata` of
   // the item it will be touching.
-  // This can be used to determine if a separate should be added.
+  // This can be used to determine if a separator should be added.
   // See loop.js for an example.
   return $item;
 });
