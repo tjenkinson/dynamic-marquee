@@ -42,6 +42,7 @@ export class Marquee {
     this._onItemRemoved = [];
     this._onAllItemsRemoved = [];
     this._windowOffset = 0;
+    this._resyncSlider = false;
     this._gapSize = 0;
     this._items = [];
     this._pendingItem = null;
@@ -57,7 +58,11 @@ export class Marquee {
     }
     this._$window = $window;
     this._containerSizeWatcher = new SizeWatcher($window);
-    this._containerSizeWatcher.onSizeChange(() => this._tickOnRaf());
+    this._containerSizeWatcher.onSizeChange(() => {
+      // when the page zoom changes the slider transform transition behaves in a weird way so this resets it
+      this._resyncSlider = true;
+      this._tickOnRaf();
+    });
     this.windowInverseSize = null;
     this._updateWindowInverseSize();
     const $moving = document.createElement('div');
@@ -266,6 +271,7 @@ export class Marquee {
   _cleanup() {
     this._correlation = null;
     this._windowOffset = 0;
+    this._resyncSlider = false;
   }
 
   _tickOnRaf() {
@@ -324,8 +330,9 @@ export class Marquee {
       this._slider.setOffset(
         this._windowOffset * -1,
         this._rate,
-        resynced || goneVisible,
+        resynced || goneVisible || this._resyncSlider,
       );
+      this._resyncSlider = false;
 
       if (!this._correlation || this._correlation.rate !== this._rate) {
         this._correlation = {
