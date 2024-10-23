@@ -44,6 +44,6 @@
     "husky": "^8.0.3",
     "longest-common-substring": "0.0.1",
     "prettier": "^3.0.0",
-    "rollup": "^3.18.0"
+    "rollup": "^4.24.0"
   }
 }
