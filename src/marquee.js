@@ -5,7 +5,6 @@ import { DIRECTION } from './direction.js';
 import { defer, deferException, toDomEl, first, last } from './helpers.js';
 import { SizeWatcher } from './size-watcher.js';
 
-const maxTranslateDistance = 500000;
 // const maxTranslateDistance = 500000;
 // const maxTranslateDistance = 1000;
 const maxTranslateDistance = 500;
