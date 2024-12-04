@@ -1,5 +1,5 @@
 import './style.css';
-import { Marquee, loop, LoopReturn } from 'dynamic-marquee';
+import { Marquee, LoopReturn } from 'dynamic-marquee';
 
 declare global {
   interface Window {
