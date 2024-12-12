@@ -1,14 +1,5 @@
 import { Listeners } from './listeners';
 
-const PX_REGEX = /px$/;
-
-function pxStringToValue(input) {
-  if (!PX_REGEX.test(input)) {
-    throw new Error('String missing `px` suffix');
-  }
-  return parseFloat(input.slice(0, -2));
-}
-
 export class SizeWatcher {
   constructor($el) {
     const listeners = Listeners();
@@ -32,16 +23,14 @@ export class SizeWatcher {
   getWidth() {
     if (this._width !== null) return this._width;
 
-    // maps to `inlineSize`
-    const width = pxStringToValue(window.getComputedStyle(this._$el).width);
+    const width = this._$el.getBoundingClientRect().width;
     if (this._observer) this._width = width;
     return width;
   }
   getHeight() {
     if (this._height !== null) return this._height;
 
-    // maps to `blockSize`
-    const height = pxStringToValue(window.getComputedStyle(this._$el).height);
+    const height = this._$el.getBoundingClientRect().height;
     if (this._observer) this._height = height;
     return height;
   }
