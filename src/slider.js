@@ -1,6 +1,7 @@
 import { DIRECTION } from './direction';
 
-const transitionDuration = 30000;
+// const transitionDuration = 30000;
+const transitionDuration = 15000;
 
 export class Slider {
   constructor($el, direction) {
@@ -10,6 +11,7 @@ export class Slider {
   }
 
   setOffset(offset, rate, force) {
+    // force = true;
     const transitionState = this._transitionState;
     const rateChanged = !transitionState || transitionState.rate !== rate;
     if (transitionState && !force) {
@@ -18,6 +20,8 @@ export class Slider {
         return;
       }
     }
+
+    // if (offset === 0) offset = 300;
 
     if (force || rateChanged) {
       if (this._direction === DIRECTION.RIGHT) {
@@ -28,10 +32,13 @@ export class Slider {
 
       this._$el.style.transition = 'none';
       this._$el.offsetLeft;
+      console.log('offset left', offset);
     }
 
     if (rate && (force || rateChanged)) {
       this._$el.style.transition = `transform ${transitionDuration}ms linear`;
+
+      console.log('updating transition');
     }
 
     if (rate) {

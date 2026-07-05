@@ -4,7 +4,7 @@ import { SizeWatcher } from './size-watcher.js';
 export class Item {
   constructor({ $el, direction, metadata, snapToNeighbor }) {
     const $container = document.createElement('div');
-    $container.style.all = 'unset';
+    // $container.style.all = 'unset';
     $container.style.display = 'block';
     $container.style.opacity = '0';
     $container.style.pointerEvents = 'none';
