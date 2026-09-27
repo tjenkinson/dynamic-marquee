@@ -1,13 +1,16 @@
 #marquee {
-  position: fixed;
-  overflow: hidden;
+  /* position: fixed; */
+  /* overflow: hidden; */
+  width: 200px;
   margin: 0;
+  margin-left: 500px;
+  /* margin-left: 600px; */
   padding: 7px 0;
   font-size: 20px;
-  bottom: 0;
+  /* bottom: 0;
   left: 0;
-  right: 0;
+  right: 0; */
   background-color: #c80000;
-  color: #ffffff;
+  color: #000000;
   font-family: Verdana, Geneva, sans-serif;
 }
